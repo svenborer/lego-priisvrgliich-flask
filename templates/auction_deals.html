@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Auction Deals</h1>
+
+{% if auction_deals %}
+
+<h3>Bid Auctions</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Title</th>
+            <th scope="col">Condition</th>
+            <th scope="col">Price</th>
+            <th scope="col">Bricklink</th>
+            <th scope="col">Ends In</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for deal in auction_deals %}
+        <tr>
+            <td>{{ deal['set_number']}}</td>
+            <td><a href="{{ deal['url'] }}">{{ deal['title'] }}</a></td>
+            <td>{{ deal['product_condition'] }}</td>
+            <td>{{ deal['price']|round(1) }} CHF</td>
+            <td>{{ deal['qty_avg_price'] }} CHF (<b>{{ deal['save_in_percentage']|round(1) }}%</b>)</td>
+            <td>{{ deal['end_date'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endif %}
+
+{% if buy_now_deals %}
+
+<h3>BuyNow Auctions</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Title</th>
+            <th scope="col">Condition</th>
+            <th scope="col">Price</th>
+            <th scope="col">Bricklink</th>
+            <th scope="col">Ends In</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for deal in buy_now_deals %}
+        <tr>
+            <td>{{ deal['set_number']}}</td>
+            <td><a href="{{ deal['url'] }}">{{ deal['title'] }}</a></td>
+            <td>{{ deal['product_condition'] }}</td>
+            <td>{{ deal['price']|round(1) }} CHF</td>
+            {% if deal['save_in_percentage'] %}
+                <td>{{ deal['qty_avg_price'] }} CHF (<b>{{ deal['save_in_percentage']|round(1) }}%</b>)</td>
+            {% else %}
+                <td>{{ deal['qty_avg_price'] }} CHF</td>
+            {% endif %}
+            <td>{{ deal['end_date'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endif %}
+
+{% endblock %}

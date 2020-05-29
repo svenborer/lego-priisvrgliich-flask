@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Provider Deals</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col"></th>
+            <th scope="col"></th>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Year</th>
+            <th scope="col">Theme</th>
+            <th scope="col">Provider</th>
+            <th scope="col">Price</th>
+            <th scope="col">List Price</th>
+            <th scope="col">Found On</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for listing in new_listings %}
+        <tr>
+            <td>
+                {% if listing['is_favorite'] %}
+                    <i class="fas fa-star"></i>
+                {% else %}
+                    <i class="far fa-star"></i>
+                {% endif%}
+            </td>
+            <td>
+                {% if listing['availability'] == 3 %}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #73c44d; fill: currentColor;">
+                        <circle cx="8" cy="8" r="8"></circle>
+                    </svg>
+                {% elif listing['availability'] == 4 %}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #3495eb; fill: currentColor;">
+                        <circle cx="8" cy="8" r="8"></circle>
+                    </svg>
+                {% elif listing['availability'] == 2 %}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #ffcc00; fill: currentColor;">
+                        <circle cx="8" cy="8" r="8"></circle>
+                    </svg>
+                {% elif listing['availability'] == 1 %}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #ff3300; fill: currentColor;">
+                        <circle cx="8" cy="8" r="8"></circle>
+                    </svg>
+                {% else %}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #b3b3b3; fill: currentColor;">
+                        <circle cx="8" cy="8" r="8"></circle>
+                    </svg>
+                {% endif %}
+            </td>
+            <td><a href="{{ url_for('set_information', set_number=listing['set_number']) }}">{{ listing['set_number'] }}</a></td>
+            <td><a href="{{ listing['url'] }}">{{ listing['name'] }}</a></td>
+            <td>{{ listing['year'] }}</td>
+            <td>{{ listing['theme'] }}/{{ listing['subtheme'] }}</td>
+            <td>{{ listing['provider'] }}</td>
+            <td>{{ listing['price'] }} CHF</td>
+            <td>{{ listing['ch_price'] }} CHF</td>
+            <td>{{ listing['scan_date'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>{{ set_number }}</h1>
+
+<h2>Information</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Year</th>
+            <th scope="col">Theme</th>
+            <th scope="col">Subtheme</th>
+            <th scope="col">Pieces</th>
+            <th scope="col">Minifigs</th>
+            <th scope="col">List Price</th>
+            <th scope="col">Bricklink</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for info in set_information %}
+        <tr>
+            <td>{{ info['set_number'] }}</td>
+            <td>{{ info['name'] }}</td>
+            <td>{{ info['year'] }}</td>
+            <td>{{ info['theme'] }}</td>
+            <td>{{ info['subtheme'] }}</td>
+            <td>{{ info['pieces'] }}</td>
+            <td>{{ info['minifigs'] }}</td>
+            {% if info['ch_price'] %}
+                <td>{{ info['ch_price'] }} CHF</td>
+            {% else %}
+                <td>NA</td>
+            {% endif %}
+            {% if info['difference'] %}
+                <td>{{ info['qty_avg_price'] }} CHF ({{ info['difference']|round(1) }} %)</td>
+            {% else %}
+                <td>{{ info['qty_avg_price'] }} CHF</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Offers</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Provider</th>
+            <th scope="col">URL</th>
+            <th scope="col">Price</th>
+            <th scope="col">List Price Save</th>
+            <th scope="col">Bricklink Save</th>
+            <th scope="col">ScanID</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for offer in offers %}
+        <tr>
+            <td>{{ offer['provider'] }}</td>
+            <td><a href="{{ offer['url'] }}">Click here to go to the offer.</a></td>
+            <td>{{ offer['price']|round(2) }} CHF</td>
+            {% if offer['save_in_percentage_lp'] %}
+                <td>{{ offer['save_in_percentage_lp']|round(1) }} %</td>
+            {% else %}
+                <td>NA</td>
+            {% endif %}
+            <td>{{ offer['save_in_percentage_bl']|round(1) }} %</td>
+            <td>{{ offer['scan_id'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Price Charts</h2>
+<h2>Alltime</h2>
+<canvas id="canvas"></canvas>
+<script>
+    var config = {
+        type: 'line',
+        data: {
+            labels: [
+                {% for date in dates -%}
+                    "{{ date }}",
+                {%- endfor %}
+            ],
+            datasets: [
+                {% for provider in prices %}
+                    {
+                    label: '{{ provider }}',
+                    fill: false,
+                    backgroundColor: '{{ prices[provider]["color"] }}',
+                    borderColor: '{{ prices[provider]["color"] }}',
+                    borderWidth: 1,
+                    pointRadius: 1,
+                    spanGaps: true,
+                    data: [
+                    {% for price in prices[provider]["prices"] -%}
+                        {{ price }},
+                    {%- endfor %}
+                    ]},
+                {% endfor %}
+                ],
+            },
+        options: {
+            legend: {
+                display: false
+            },
+            responsive: true,
+                title: {
+                display: true,
+                    text: 'Priis Chart'
+            },
+            tooltips: {
+                mode: 'index',
+                    intersect: false,
+                },
+            hover: {
+                mode: 'nearest',
+                    intersect: true
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: false
+                    }
+                }],
+            },
+            annotation: {
+                drawTime: 'afterDatasetsDraw',
+                annotations: [
+                    {% if bl_price %}
+                    {
+                    id: 'bl_price',
+                    type: 'line',
+                    mode: 'horizontal',
+                    scaleID: 'y-axis-0',
+                    value: {{ bl_price }},
+                    borderColor: 'black',
+                    borderWidth: 1,
+                    label: {
+                        backgroundColor: 'black',
+                        content: 'Bricklink Price',
+                        enabled: true
+                    }}
+                    {% endif %}
+                    {% if list_price %}
+                    , {
+                    id: 'list_price',
+                    type: 'line',
+                    mode: 'horizontal',
+                    scaleID: 'y-axis-0',
+                    value: {{ list_price }},
+                    borderColor: 'black',
+                    borderWidth: 1,
+                    label: {
+                        backgroundColor: 'black',
+                        content: 'List Price',
+                        enabled: true
+                    }}
+                    {% endif %}
+                ]
+            }, 
+            plugins: {
+                zoom: {
+                    // Container for pan options
+                    pan: {
+                        // Boolean to enable panning
+                        enabled: true,
+
+                        // Panning directions. Remove the appropriate direction to disable
+                        // Eg. 'y' would only allow panning in the y direction
+                        // A function that is called as the user is panning and returns the
+                        // available directions can also be used:
+                        //   mode: function({ chart }) {
+                        //     return 'xy';
+                        //   },
+                        mode: 'x'
+                    },
+
+                    // Container for zoom options
+                    zoom: {
+                        // Boolean to enable zooming
+                        enabled: true,
+
+                        // Enable drag-to-zoom behavior
+                        drag: true,
+                        mode: 'x'
+                    }
+                }
+            }
+        }
+    };
+
+    window.onload = function () {
+        var ctx = document.getElementById('canvas').getContext('2d');
+        window.myLine = new Chart(ctx, config);
+    };
+</script>
+
+{% endblock %}
