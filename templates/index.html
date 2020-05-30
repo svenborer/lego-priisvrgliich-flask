@@ -4,8 +4,7 @@
 
 <h1>Provider Deals</h1>
 
-<table class="table">
-    <thead>
+<table class="table table-sm" width="100%">    <thead>
         <tr>
             <th scope="col"></th>
             <th scope="col"></th>
@@ -15,7 +14,7 @@
             <th scope="col">Theme</th>
             <th scope="col">Provider</th>
             <th scope="col">Price</th>
-            <th scope="col">List Price</th>
+            <th scope="col">RRP</th>
             <th scope="col">Bricklink</th>
         </tr>
     </thead>
@@ -55,7 +54,7 @@
             <td><a href="{{ url_for('set_information', set_number=deal['set_number']) }}">{{ deal['set_number'] }}</a></td>
             <td><a href="{{ deal['url'] }}">{{ deal['name'] }}</a></td>
             <td>{{ deal['year'] }}</td>
-            <td>{{ deal['theme'] }}/{{ deal['subtheme'] }}</td>
+            <td><a href="{{ url_for('sets_by_theme', theme=deal['theme']) }}">{{ deal['theme'] }}</a>/{{ deal['subtheme'] }}</td>
             <td>{{ deal['provider'] }}</td>
             <td>{{ deal['price'] }} CHF</td>
             {% if deal['save_in_percentage_lp'] or deal['save_in_percentage_lp'] == 0 %}

@@ -4,6 +4,28 @@
 
 <h1>{{ set_number }}</h1>
 
+{% for info in set_information %}
+    <p><a href="{{ url_for('sets_by_theme', theme=info['theme']) }}">{{ info['theme'] }}</a> > {{ info['subtheme'] }}</p>
+    <p>
+        This is set number <b>{{ info['set_number'] }} {{ info['name'] }}</b>.
+        This set has been released in <b>{{ info['year'] }}</b>.
+        {% if info['ch_price'] %}
+            It has a RRP of <b>{{ info['ch_price'] }} CHF</b>.
+        {% else %}
+            RRP is not available.
+        {% endif %}
+        The set contains of <b>{{ info['pieces'] }}</b> pieces and <b>{{ info['minifigs'] if info['minifigs'] else 0 }}</b> minifigs{{ ' , therefore has an original {} CHF per LEGO piece'.format((info['ch_price']/info['pieces'])|round(2)) if info['ch_price'] and info['pieces'] }}.
+        {% if offers %}
+            The current low price of this set is <b>{{ offers[0]['price'] }} CHF</b> offered by <b>{{ offers[0]['provider'] }}</b>, which translates to <b>{{ '{} CHF'.format((offers[0]['price']/info['pieces'])|round(2)) if offers[0]['price'] and info['pieces'] else 'N/A' }}</b> per LEGO piece.
+            {% if info['ch_price'] %}
+                You will save <b>{{ (info['ch_price']-offers[0]['price'])|round(2) }} CHF</b>, which is <b>{{ '{}%'.format(offers[0]['save_in_percentage_lp']|round(0)) }}</b>.
+            {% endif %}
+        {% else %}
+            This set is currently not on the market.
+        {% endif %}
+    </p>
+{% endfor %}
+
 <h2>Information</h2>
 <table class="table">
     <thead>
@@ -15,7 +37,7 @@
             <th scope="col">Subtheme</th>
             <th scope="col">Pieces</th>
             <th scope="col">Minifigs</th>
-            <th scope="col">List Price</th>
+            <th scope="col">RRP</th>
             <th scope="col">Bricklink</th>
         </tr>
     </thead>
@@ -29,54 +51,73 @@
             <td>{{ info['subtheme'] }}</td>
             <td>{{ info['pieces'] }}</td>
             <td>{{ info['minifigs'] }}</td>
-            {% if info['ch_price'] %}
-                <td>{{ info['ch_price'] }} CHF</td>
-            {% else %}
-                <td>NA</td>
-            {% endif %}
-            {% if info['difference'] %}
-                <td>{{ info['qty_avg_price'] }} CHF ({{ info['difference']|round(1) }} %)</td>
-            {% else %}
-                <td>{{ info['qty_avg_price'] }} CHF</td>
-            {% endif %}
+            <td>{{ info['ch_price'] if info['ch_price'] }} CHF</td>
+            <td>{{ '{} CHF ({}%)'.format(info['qty_avg_price'], info['difference']|round(0)) if info['difference'] else 'N/A' }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
+{% if offers %}
+
 <h2>Offers</h2>
 <table class="table">
     <thead>
         <tr>
+            <th scope="col"></th>
             <th scope="col">Provider</th>
             <th scope="col">URL</th>
             <th scope="col">Price</th>
-            <th scope="col">List Price Save</th>
-            <th scope="col">Bricklink Save</th>
-            <th scope="col">ScanID</th>
+            <th scope="col">RRP Save</th>
+            <th scope="col">BL Save</th>
+            <th scope="col">Scan ID</th>
         </tr>
     </thead>
     <tbody>
         {% for offer in offers %}
         <tr>
+            <td>
+            {% if offer['availability'] == 3 %}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #73c44d; fill: currentColor;">
+                    <circle cx="8" cy="8" r="8"></circle>
+                </svg>
+            {% elif offer['availability'] == 4 %}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #3495eb; fill: currentColor;">
+                    <circle cx="8" cy="8" r="8"></circle>
+                </svg>
+            {% elif offer['availability'] == 2 %}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #ffcc00; fill: currentColor;">
+                    <circle cx="8" cy="8" r="8"></circle>
+                </svg>
+            {% elif offer['availability'] == 1 %}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #ff3300; fill: currentColor;">
+                    <circle cx="8" cy="8" r="8"></circle>
+                </svg>
+            {% else %}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #b3b3b3; fill: currentColor;">
+                    <circle cx="8" cy="8" r="8"></circle>
+                </svg>
+            {% endif %}
+            </td>
             <td>{{ offer['provider'] }}</td>
             <td><a href="{{ offer['url'] }}">Click here to go to the offer.</a></td>
             <td>{{ offer['price']|round(2) }} CHF</td>
-            {% if offer['save_in_percentage_lp'] %}
-                <td>{{ offer['save_in_percentage_lp']|round(1) }} %</td>
-            {% else %}
-                <td>NA</td>
-            {% endif %}
-            <td>{{ offer['save_in_percentage_bl']|round(1) }} %</td>
+            <td>{{ '{}%'.format(offer['save_in_percentage_lp']|round(0)) if offer['save_in_percentage_lp'] else 0 }}</td>
+            <td>{{ '{}%'.format(offer['save_in_percentage_bl']|round(0)) if offer['save_in_percentage_bl'] else 'N/A' }}</td>
             <td>{{ offer['scan_id'] }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
+{% endif %}
+
+{% if prices%}
+
 <h2>Price Charts</h2>
-<h2>Alltime</h2>
 
 {% include '_price_chart.html' %}
+
+{% endif %}
 
 {% endblock %}

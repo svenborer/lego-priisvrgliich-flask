@@ -3,6 +3,7 @@ import os
 import re
 from flask import Flask
 from flask_caching import Cache
+from helper import get_availability_score
 
 from flask import render_template
 from flask_sqlalchemy import SQLAlchemy
@@ -20,8 +21,6 @@ cache.init_app(app, config={'CACHE_TYPE': 'simple'})
 import queries as q
 import models
 
-COLORS = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722', '#795548', '#9e9e9e', '#607d8b']
-
 wl_set_number = _config['scanner']['wishlist']['set_number']
 wl_theme = _config['scanner']['wishlist']['theme']
 wl_subtheme = _config['scanner']['wishlist']['subtheme']
@@ -33,18 +32,7 @@ def index():
     provider_deals = []
     for deal in provider_deals_tmp:
         deal = dict(deal)
-        if str(deal['set_number']) in wl_set_number or deal['subtheme'] in wl_subtheme or deal['theme'] in wl_theme:
-            deal.update({'is_favorite' : True})
-        if str(deal['availability']) in _config['availability']['coming_soon']:
-            deal.update({'availability' : 4})
-        elif str(deal['availability']) in _config['availability']['available']:
-            deal.update({'availability' : 3})
-        elif str(deal['availability']) in _config['availability']['limited']:
-            deal.update({'availability' : 2})
-        elif str(deal['availability']) in _config['availability']['out_of_stock']:
-            deal.update({'availability' : 1})
-        else:
-            deal.update({'availability' : 0})
+        deal.update({'availability' : get_availability_score(deal['availability'])})
         provider_deals.append(deal)
     return render_template('index.html', provider_deals=provider_deals)
 
@@ -58,30 +46,35 @@ def set_information(set_number):
             bl_price = bl_price[0] if bl_price else None
             list_price = [d['ch_price'] for d in set_informations if d['set_number'] == set_number]
             list_price = list_price[0] if list_price else None
-            offers = q.get_latest_offers(set_number)
+            offers_tmp = q.get_latest_offers(set_number)
+            offers = []
+            for offer in offers_tmp:
+                offer = dict(offer)
+                offer.update({'availability' : get_availability_score(offer['availability'])})
+                offers.append(offer)
             sql_prices_temp = "SELECT MIN(price) AS price, provider, DATE_FORMAT(scan_date, '%%Y-%%m-%%d') AS timestamp FROM tbl_provider_scans WHERE set_number = %s GROUP BY provider, timestamp"
             sql_prices_temp_data = q._execute_query(sql_prices_temp, (set_number, ))
-            print(sql_prices_temp_data)
-            providers = list(dict.fromkeys([_['provider'] for _ in sql_prices_temp_data]))
-            tmp_dates = list(dict.fromkeys([_['timestamp'] for _ in sql_prices_temp_data]))
-            min_date = datetime.strptime(min(tmp_dates), '%Y-%m-%d')
-            max_date = datetime.strptime(max(tmp_dates), '%Y-%m-%d')
-            dates = []
-            while min_date <= max_date:
-                min_date = min_date + timedelta(days=+1)
-                dates.append(min_date.strftime('%Y-%m-%d'))
-            colorIndex = 0
             prices = {}
-            for provider in providers:
-                prices[provider] = {}
-                prices[provider]['color'] = COLORS[colorIndex]
-                prices[provider]['prices'] = []
-                price_timestamp = [(d['price'], d['timestamp']) for d in sql_prices_temp_data if d['provider'] == provider]
-                for date in dates:
-                    p = [t[0] for t in price_timestamp if t[1] == date]
-                    price = p[0] if p else "null"
-                    prices[provider]['prices'].append(price)
-                colorIndex = colorIndex + 2
+            dates = []
+            if sql_prices_temp_data:
+                providers = list(dict.fromkeys([_['provider'] for _ in sql_prices_temp_data]))
+                tmp_dates = list(dict.fromkeys([_['timestamp'] for _ in sql_prices_temp_data]))
+                min_date = datetime.strptime(min(tmp_dates), '%Y-%m-%d')
+                max_date = datetime.strptime(max(tmp_dates), '%Y-%m-%d')
+                while min_date <= max_date:
+                    min_date = min_date + timedelta(days=+1)
+                    dates.append(min_date.strftime('%Y-%m-%d'))
+                colorIndex = 0
+                for provider in providers:
+                    prices[provider] = {}
+                    prices[provider]['color'] = _config['colors'][colorIndex]
+                    prices[provider]['prices'] = []
+                    price_timestamp = [(d['price'], d['timestamp']) for d in sql_prices_temp_data if d['provider'] == provider]
+                    for date in dates:
+                        p = [t[0] for t in price_timestamp if t[1] == date]
+                        price = p[0] if p else "null"
+                        prices[provider]['prices'].append(price)
+                    colorIndex = colorIndex + 2
             return render_template(
                 'set.html', 
                 set_information=set_informations, 
@@ -93,7 +86,7 @@ def set_information(set_number):
                 bl_price=bl_price, 
                 list_price=list_price
             )
-    return render_template('404.html')
+    return render_template('404.html'), 404
 
 @app.route("/lego-priisvrgliich/new_listings")
 @cache.cached(timeout=3600)
@@ -102,19 +95,7 @@ def new_listings():
     new_listings_tmp = q.get_new_listings()
     for listing in new_listings_tmp:
         listing = dict(listing)
-        listing.update({'is_favorite' : False})
-        if str(listing['set_number']) in wl_set_number or listing['subtheme'] in wl_subtheme or listing['theme'] in wl_theme:
-            listing.update({'is_favorite' : True})
-        if str(listing['availability']) in _config['availability']['coming_soon']:
-            listing.update({'availability' : 4})
-        elif str(listing['availability']) in _config['availability']['available']:
-            listing.update({'availability' : 3})
-        elif str(listing['availability']) in _config['availability']['limited']:
-            listing.update({'availability' : 2})
-        elif str(listing['availability']) in _config['availability']['out_of_stock']:
-            listing.update({'availability' : 1})
-        else:
-            listing.update({'availability' : 0})
+        listing.update({'availability' : get_availability_score(listing['availability'])})
         new_listings.append(listing)
     return render_template(
         'new_listings.html', 
@@ -180,6 +161,17 @@ def scan_statistics():
         'scan_statistics.html', 
         data=data
     )
+
+@app.route("/lego-priisvrgliich/theme/<theme>")
+def sets_by_theme(theme):
+    sets = q.get_sets_on_market_unique(theme=theme)
+    if sets:
+        return render_template('sets_by_theme.html', sets=sets)
+    return render_template('404.html'), 404
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
 
 if __name__ == "__main__":
     app.run(host='127.0.0.1', port=5000, debug=True)

@@ -29,10 +29,7 @@ def get_latest_scan_ids():
 def get_latest_offers(set_number):
     query = """
         SELECT
-            tbl_provider_scans.provider,
-            tbl_provider_scans.url,
-            tbl_provider_scans.scan_id,
-            tbl_provider_scans.price,
+            *,
             (
                 100 -(
                     tbl_provider_scans.price
@@ -46,32 +43,21 @@ def get_latest_offers(set_number):
         FROM
             tbl_provider_scans
         JOIN tbl_sets ON tbl_sets.set_number = tbl_provider_scans.set_number
-        JOIN tmp_newest_bricklink_prices AS blp
+        LEFT JOIN tmp_newest_bricklink_prices AS blp
         ON
             blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
 		JOIN tmp_latest_scan_ids AS sid USING(scan_id)
         WHERE 
             tbl_provider_scans.set_number = %s
         ORDER BY
-            save_in_percentage_bl
-        DESC
+            price
     """
     return _execute_query(query, (set_number, ))
 
 def get_sets_currently_on_market():
-    scan_ids = get_latest_scan_ids()
     query = """
         SELECT
-            tbl_sets.name,
-            tbl_sets.year,
-            tbl_sets.theme,
-            tbl_sets.subtheme,
-            tbl_sets.pieces,
-            tbl_sets.minifigs,
-            tbl_sets.ch_price,
-            blp.qty_avg_price,
-            tbl_provider_scans.set_number,
-            blp.qty_avg_price,
+            *,
             (
                 (
                     blp.qty_avg_price /(tbl_sets.ch_price / 100)
@@ -79,29 +65,42 @@ def get_sets_currently_on_market():
             ) AS difference
         FROM
             tbl_provider_scans
-        RIGHT JOIN tbl_sets ON tbl_sets.set_number = tbl_provider_scans.set_number
-        JOIN tmp_newest_bricklink_prices AS blp ON blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
-        WHERE
-            tbl_provider_scans.scan_id IN('{}')
+        RIGHT JOIN tbl_sets USING(set_number)
+        JOIN tmp_newest_bricklink_prices AS blp
+        ON
+            blp.set_number = tbl_provider_scans.set_number AND
+            blp.product_condition = 'new'
+        JOIN tmp_latest_scan_ids USING(scan_id)
         GROUP BY
             tbl_provider_scans.set_number
         ORDER BY
             tbl_sets.theme, tbl_sets.year
     """
-    return _execute_query(query.format("', '".join(scan_ids)))
+    return _execute_query(query)
 
-def get_set_information(set_number='%'):
-    scan_ids = get_latest_scan_ids()
+def get_sets_on_market_unique(theme='%'):
     query = """
         SELECT
-            tbl_sets.name,
-            tbl_sets.year,
-            tbl_sets.theme,
-            tbl_sets.subtheme,
-            tbl_sets.pieces,
-            tbl_sets.minifigs,
-            tbl_sets.ch_price,
-            tbl_provider_scans.set_number,
+            *
+        FROM
+            tbl_provider_scans
+        RIGHT JOIN tbl_sets USING(set_number)
+        JOIN tmp_latest_scan_ids USING(scan_id)
+        WHERE
+            tbl_sets.theme LIKE %s
+        GROUP BY
+            tbl_provider_scans.set_number
+        ORDER BY
+            tbl_sets.year
+        DESC
+    """
+    return _execute_query(query, (theme, ))
+
+def get_set_information(set_number='%'):
+    query = """
+        SELECT
+            tbl_provider_scans.*,
+            tbl_sets.*,
             blp.qty_avg_price,
             (
                 (
@@ -109,19 +108,22 @@ def get_set_information(set_number='%'):
                 ) - 100
             ) AS difference
         FROM
-            tbl_provider_scans
-        LEFT JOIN tbl_sets ON tbl_sets.set_number = tbl_provider_scans.set_number
-        JOIN tmp_newest_bricklink_prices AS blp ON blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
+            tbl_sets
+        LEFT JOIN tbl_provider_scans USING(set_number)
+        LEFT JOIN tmp_newest_bricklink_prices AS blp
+        ON
+            blp.set_number = tbl_sets.set_number AND
+            blp.product_condition = 'new'
+        LEFT JOIN tmp_latest_scan_ids USING(scan_id)
         WHERE
-            tbl_provider_scans.scan_id IN('{}') AND
-            tbl_provider_scans.set_number LIKE %s
+            tbl_sets.set_number LIKE %s
         GROUP BY
-            tbl_provider_scans.set_number
+            tbl_sets.set_number
         ORDER BY
-            tbl_provider_scans.set_number
+            tbl_sets.set_number
         DESC
     """
-    return _execute_query(query.format("', '".join(scan_ids)), (set_number))
+    return _execute_query(query, (set_number, ))
 
 def get_new_listings():
     query = """
@@ -147,21 +149,10 @@ def get_new_listings():
     """
     return _execute_query(query)         
 
-def get_provider_deals(bl_treshold=0, lp_treshold=40):
+def get_provider_deals(bl_treshold=0, lp_treshold=40, theme='%'):
     query = """
         SELECT
-            tbl_sets.name,
-            tbl_sets.year,
-            tbl_sets.theme,
-            tbl_sets.subtheme,
-            tbl_sets.ch_price,
-            tbl_provider_scans.set_number,
-            tbl_provider_scans.scan_date,
-            tbl_provider_scans.url,
-            tbl_provider_scans.provider,
-            tbl_provider_scans.price,
-            tbl_provider_scans.availability,
-            blp.qty_avg_price,
+            *,
             (
                 100 -(
                     tbl_provider_scans.price /(blp.qty_avg_price / 100)
@@ -174,12 +165,18 @@ def get_provider_deals(bl_treshold=0, lp_treshold=40):
             ) AS save_in_percentage_lp
         FROM
             tbl_provider_scans
-        JOIN tmp_newest_bricklink_prices AS blp ON blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
-        LEFT JOIN tbl_sets ON tbl_sets.set_number = tbl_provider_scans.set_number
+        JOIN tmp_newest_bricklink_prices AS blp
+        ON
+            blp.set_number = tbl_provider_scans.set_number AND
+            blp.product_condition = 'new'
+        LEFT JOIN tbl_sets
+        ON
+            tbl_sets.set_number = tbl_provider_scans.set_number
         JOIN tmp_latest_scan_ids USING(scan_id)
         WHERE
             blp.qty_avg_price > 0 AND
             tbl_sets.name IS NOT NULL AND 
+            tbl_sets.theme LIKE %s AND
             (
                 (
                     100 -(
@@ -199,18 +196,12 @@ def get_provider_deals(bl_treshold=0, lp_treshold=40):
             save_in_percentage_bl
         DESC
     """
-    return _execute_query(query, (bl_treshold, lp_treshold))
+    return _execute_query(query, (theme, bl_treshold, lp_treshold))
 
 def get_auction_deals():
     query = """
         SELECT
-            tbl_sets.theme,
-            tbl_sets.subtheme,
-            tbl_auction_scans.url,
-            tbl_auction_scans.set_number,
-            tbl_auction_scans.product_condition,
-            tbl_auction_scans.title,
-            tbl_auction_scans.end_date,
+            *,
             (
                 tbl_auction_scans.auction_price + tbl_auction_scans.shipping_price
             ) AS price,
@@ -240,14 +231,7 @@ def get_auction_deals():
 def get_buy_now_deals(after=datetime.now()+timedelta(hours=-296)):
     query = """
         SELECT
-            tbl_sets.subtheme,
-            tbl_sets.theme,
-            tbl_sets.year,
-            tbl_auction_scans.url,
-            tbl_auction_scans.set_number,
-            tbl_auction_scans.product_condition,
-            tbl_auction_scans.title,
-            tbl_auction_scans.end_date,
+            *,
             (
                 tbl_auction_scans.buy_now_price + tbl_auction_scans.shipping_price
             ) AS price,
@@ -261,9 +245,7 @@ def get_buy_now_deals(after=datetime.now()+timedelta(hours=-296)):
         FROM
             tbl_auction_scans
         JOIN tbl_sets USING(set_number)
-        JOIN tmp_newest_bricklink_prices AS blp
-        ON
-            tbl_auction_scans.set_number = blp.set_number AND blp.product_condition = tbl_auction_scans.product_condition
+        JOIN tmp_newest_bricklink_prices AS blp USING(set_number, product_condition)
         WHERE
             tbl_auction_scans.buy_now_price IS NOT NULL AND
             blp.qty_avg_price > 0 AND
@@ -281,13 +263,7 @@ def get_buy_now_deals(after=datetime.now()+timedelta(hours=-296)):
 def get_market_statistics_for_sets():
     query = """
         SELECT
-            tbl_sets.set_number,
-            tbl_sets.theme,
-            tbl_sets.subtheme,
-            tbl_sets.name,
-            tbl_sets.year,
-            tbl_sets.us_price,
-            blp.qty_avg_price,
+            *,
             (
                 (
                     blp.qty_avg_price /(tbl_sets.us_price / 100)
