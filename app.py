@@ -29,8 +29,6 @@ wl_subtheme = _config['scanner']['wishlist']['subtheme']
 @app.route("/lego-priisvrgliich/")
 @cache.cached(timeout=3600)
 def index():
-    latests_scans = q._execute_query("SELECT scan_id FROM (SELECT * FROM tbl_provider_scans GROUP BY provider, scan_id ORDER BY scan_date DESC) AS t GROUP BY provider")
-    scan_ids = [d['scan_id'] for d in latests_scans]
     provider_deals_tmp = q.get_provider_deals()
     provider_deals = []
     for deal in provider_deals_tmp:
@@ -64,8 +62,8 @@ def set_information(set_number):
             sql_prices_temp = "SELECT MIN(price) AS price, provider, DATE_FORMAT(scan_date, '%%Y-%%m-%%d') AS timestamp FROM tbl_provider_scans WHERE set_number = %s GROUP BY provider, timestamp"
             sql_prices_temp_data = q._execute_query(sql_prices_temp, (set_number, ))
             print(sql_prices_temp_data)
-            providers = list(dict.fromkeys([row['provider'] for row in sql_prices_temp_data]))
-            tmp_dates = list(dict.fromkeys([d['timestamp'] for d in sql_prices_temp_data]))
+            providers = list(dict.fromkeys([_['provider'] for _ in sql_prices_temp_data]))
+            tmp_dates = list(dict.fromkeys([_['timestamp'] for _ in sql_prices_temp_data]))
             min_date = datetime.strptime(min(tmp_dates), '%Y-%m-%d')
             max_date = datetime.strptime(max(tmp_dates), '%Y-%m-%d')
             dates = []
@@ -79,8 +77,8 @@ def set_information(set_number):
                 prices[provider]['color'] = COLORS[colorIndex]
                 prices[provider]['prices'] = []
                 price_timestamp = [(d['price'], d['timestamp']) for d in sql_prices_temp_data if d['provider'] == provider]
-                for _ in dates:
-                    p = [t[0] for t in price_timestamp if t[1] == d]
+                for date in dates:
+                    p = [t[0] for t in price_timestamp if t[1] == date]
                     price = p[0] if p else "null"
                     prices[provider]['prices'].append(price)
                 colorIndex = colorIndex + 2
@@ -127,9 +125,9 @@ def new_listings():
 @cache.cached(timeout=3600)
 def auction_deals():
     auction_deals = q.get_auction_deals()
-    auction_deals = [d for d in auction_deals if (str(d['set_number']) in wl_set_number or d['subtheme'] in wl_subtheme or d['theme'] in wl_theme) and d['save_in_percentage'] > -10]
+    auction_deals = [d for d in auction_deals if (str(d['set_number']) in wl_set_number or d['subtheme'] in wl_subtheme or d['theme'] in wl_theme) and d['save_in_percentage'] > -10 and not any(x in d['title'] for x in _config['scanner']['title_blacklist'])]
     buy_now_deals = q.get_buy_now_deals()
-    buy_now_deals = [d for d in buy_now_deals if (str(d['set_number']) in wl_set_number or d['subtheme'] in wl_subtheme or d['theme'] in wl_theme) and d['save_in_percentage'] > -10]
+    buy_now_deals = [d for d in buy_now_deals if (str(d['set_number']) in wl_set_number or d['subtheme'] in wl_subtheme or d['theme'] in wl_theme) and d['save_in_percentage'] > -10 and not any(x in d['title'] for x in _config['scanner']['title_blacklist'])]
     return render_template(
         'auction_deals.html', 
         auction_deals=auction_deals,
@@ -168,8 +166,8 @@ def set_statistics():
 @app.route("/lego-priisvrgliich/scan_statistics")
 @cache.cached(timeout=3600)
 def scan_statistics():
-    providers = [d['provider'] for d in q.get_providers()]
     scan_data = q.get_scans_by_date(age=30)
+    providers = list(dict.fromkeys([_['provider'] for _ in scan_data]))
     data = {}
     for provider in providers:
         data[provider] = []

@@ -7,17 +7,6 @@ def _execute_query(query, data=None):
             return list(con.execute(query))
         return list(con.execute(query, data))
 
-def get_auction_by_url(url):
-    query = """
-        SELECT
-            *
-        FROM 
-            tbl_auction_scans 
-        WHERE
-            url = %s
-    """
-    return db.engine.execute(query, (url, ))
-
 def get_scans_by_date(age=14):
     query = """
         SELECT
@@ -33,25 +22,11 @@ def get_scans_by_date(age=14):
     """
     return _execute_query(query, (age, ))
 
-def get_providers():
-    query = """
-        SELECT
-            *
-        FROM
-            tbl_provider_scans
-        GROUP BY
-            provider
-    """
-    return _execute_query(query)
-
 def get_latest_scan_ids():
-    query = "SELECT scan_id FROM (SELECT * FROM tbl_provider_scans GROUP BY provider, scan_id ORDER BY scan_date DESC) AS t GROUP BY provider"
-    data = _execute_query(query)
-    scan_ids = [d['scan_id'] for d in data]
-    return scan_ids
+    query = "SELECT * FROM tmp_latest_scan_ids"
+    return [d['scan_id'] for d in _execute_query(query)]
 
 def get_latest_offers(set_number):
-    scan_ids = get_latest_scan_ids()
     query = """
         SELECT
             tbl_provider_scans.provider,
@@ -71,29 +46,17 @@ def get_latest_offers(set_number):
         FROM
             tbl_provider_scans
         JOIN tbl_sets ON tbl_sets.set_number = tbl_provider_scans.set_number
-        JOIN(
-            SELECT
-                *
-            FROM
-                tbl_bricklink_prices
-            INNER JOIN(
-                SELECT
-                    set_number,
-                    MAX(scan_date) AS scan_date
-                FROM
-                    tbl_bricklink_prices
-                GROUP BY
-                    set_number
-            ) AS MAX USING(set_number, scan_date)
-        ) AS blp ON blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
+        JOIN tmp_newest_bricklink_prices AS blp
+        ON
+            blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
+		JOIN tmp_latest_scan_ids AS sid USING(scan_id)
         WHERE 
-            tbl_provider_scans.scan_id IN('{}') AND
             tbl_provider_scans.set_number = %s
         ORDER BY
             save_in_percentage_bl
         DESC
     """
-    return _execute_query(query.format("', '".join(scan_ids)), (set_number, ))
+    return _execute_query(query, (set_number, ))
 
 def get_sets_currently_on_market():
     scan_ids = get_latest_scan_ids()
@@ -117,21 +80,7 @@ def get_sets_currently_on_market():
         FROM
             tbl_provider_scans
         RIGHT JOIN tbl_sets ON tbl_sets.set_number = tbl_provider_scans.set_number
-        JOIN(
-            SELECT
-                *
-            FROM
-                tbl_bricklink_prices
-            INNER JOIN(
-                SELECT
-                    set_number,
-                    MAX(scan_date) AS scan_date
-                FROM
-                    tbl_bricklink_prices
-                GROUP BY
-                    set_number
-            ) AS MAX USING(set_number, scan_date)
-        ) AS blp ON blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
+        JOIN tmp_newest_bricklink_prices AS blp ON blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
         WHERE
             tbl_provider_scans.scan_id IN('{}')
         GROUP BY
@@ -162,21 +111,7 @@ def get_set_information(set_number='%'):
         FROM
             tbl_provider_scans
         LEFT JOIN tbl_sets ON tbl_sets.set_number = tbl_provider_scans.set_number
-        JOIN(
-            SELECT
-                *
-            FROM
-                tbl_bricklink_prices
-            INNER JOIN(
-                SELECT
-                    set_number,
-                    MAX(scan_date) AS scan_date
-                FROM
-                    tbl_bricklink_prices
-                GROUP BY
-                    set_number
-            ) AS MAX USING(set_number, scan_date)
-        ) AS blp ON blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
+        JOIN tmp_newest_bricklink_prices AS blp ON blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
         WHERE
             tbl_provider_scans.scan_id IN('{}') AND
             tbl_provider_scans.set_number LIKE %s
@@ -187,10 +122,6 @@ def get_set_information(set_number='%'):
         DESC
     """
     return _execute_query(query.format("', '".join(scan_ids)), (set_number))
-
-def get_all_running_auctions():
-    query = "SELECT * FROM tbl_auction_scans WHERE end_date > NOW()"
-    return db.engine.execute(query)
 
 def get_new_listings():
     query = """
@@ -211,15 +142,12 @@ def get_new_listings():
         WHERE
             scan_date > NOW() - INTERVAL 4 WEEK
         ORDER BY
-            `tbl_provider_scans`.`scan_date`
+            scan_date
         DESC
     """
     return _execute_query(query)         
 
 def get_provider_deals(bl_treshold=0, lp_treshold=40):
-    query = "SELECT scan_id FROM (SELECT * FROM tbl_provider_scans GROUP BY provider, scan_id ORDER BY scan_date DESC) AS t GROUP BY provider"
-    data = db.engine.execute(query)
-    scan_ids = [d['scan_id'] for d in data]
     query = """
         SELECT
             tbl_sets.name,
@@ -246,25 +174,11 @@ def get_provider_deals(bl_treshold=0, lp_treshold=40):
             ) AS save_in_percentage_lp
         FROM
             tbl_provider_scans
-        JOIN(
-            SELECT
-                *
-            FROM
-                tbl_bricklink_prices
-            INNER JOIN(
-                SELECT
-                    set_number,
-                    MAX(scan_date) AS scan_date
-                FROM
-                    tbl_bricklink_prices
-                GROUP BY
-                    set_number
-            ) AS MAX USING(set_number, scan_date)
-        ) AS blp ON blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
+        JOIN tmp_newest_bricklink_prices AS blp ON blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
         LEFT JOIN tbl_sets ON tbl_sets.set_number = tbl_provider_scans.set_number
+        JOIN tmp_latest_scan_ids USING(scan_id)
         WHERE
             blp.qty_avg_price > 0 AND
-            tbl_provider_scans.scan_id IN('{}') AND
             tbl_sets.name IS NOT NULL AND 
             (
                 (
@@ -285,7 +199,7 @@ def get_provider_deals(bl_treshold=0, lp_treshold=40):
             save_in_percentage_bl
         DESC
     """
-    return db.engine.execute(query.format("', '".join(scan_ids)), (bl_treshold, lp_treshold))
+    return _execute_query(query, (bl_treshold, lp_treshold))
 
 def get_auction_deals():
     query = """
@@ -309,21 +223,7 @@ def get_auction_deals():
         FROM
             tbl_auction_scans
         JOIN tbl_sets USING(set_number)
-        JOIN(
-            SELECT
-                *
-            FROM
-                tbl_bricklink_prices
-            INNER JOIN(
-                SELECT
-                    set_number,
-                    MAX(scan_date) AS scan_date
-                FROM
-                    tbl_bricklink_prices
-                GROUP BY
-                    set_number
-            ) AS MAX USING(set_number, scan_date)
-        ) AS blp
+        JOIN tmp_newest_bricklink_prices AS blp
         ON
             tbl_auction_scans.set_number = blp.set_number AND blp.product_condition = tbl_auction_scans.product_condition
         WHERE
@@ -361,21 +261,7 @@ def get_buy_now_deals(after=datetime.now()+timedelta(hours=-296)):
         FROM
             tbl_auction_scans
         JOIN tbl_sets USING(set_number)
-        JOIN(
-            SELECT
-                *
-            FROM
-                tbl_bricklink_prices
-            INNER JOIN(
-                SELECT
-                    set_number,
-                    MAX(scan_date) AS scan_date
-                FROM
-                    tbl_bricklink_prices
-                GROUP BY
-                    set_number
-            ) AS MAX USING(set_number, scan_date)
-        ) AS blp
+        JOIN tmp_newest_bricklink_prices AS blp
         ON
             tbl_auction_scans.set_number = blp.set_number AND blp.product_condition = tbl_auction_scans.product_condition
         WHERE
@@ -391,121 +277,6 @@ def get_buy_now_deals(after=datetime.now()+timedelta(hours=-296)):
         DESC
     """
     return _execute_query(query, (after, ))
-
-def get_bricklink_price_for_set(set_number, condition='new', age=999):
-    query = """
-        SELECT
-            *
-        FROM
-            tbl_bricklink_prices
-        WHERE
-            set_number = %s AND
-            product_condition = %s AND
-            DATEDIFF(NOW(), scan_date) < %s
-        ORDER BY
-            scan_date DESC
-        LIMIT 1
-        """
-    return db.engine.execute(query, (set_number, condition, age))
-
-def get_random_sets(limit=100):
-    query = """
-        SELECT
-            *
-        FROM
-            tbl_sets
-        WHERE
-            set_number != 0
-        ORDER BY
-            RAND()
-        LIMIT %s
-    """
-    return db.engine.execute(query, (limit, ))
-
-def get_themes(theme='%', subtheme='%'):
-    query = "SELECT * FROM tbl_sets WHERE theme LIKE %s AND subtheme LIKE %s GROUP BY theme"
-    return db.engine.execute(query, (theme, subtheme))
-
-def get_subthemes(theme='%', subtheme='%'):
-    query = "SELECT * FROM tbl_sets WHERE theme LIKE %s AND (subtheme LIKE %s OR subtheme IS NULL) GROUP BY subtheme"
-    return db.engine.execute(query, (theme, subtheme))
-
-def get_sets(id='%', set_number='%', theme='%', subtheme='%'):
-    query = """
-        SELECT
-            *
-        FROM
-            tbl_sets
-        WHERE
-            id LIKE %s AND
-            set_number LIKE %s AND
-            theme LIKE %s AND
-            subtheme LIKE %s
-        """
-    return db.engine.execute(query, (id, set_number, theme, subtheme))
-
-def get_latest_bricklink_prices(set_number='%'):
-    query = """
-        SELECT
-            *
-        FROM
-            tbl_bricklink_prices
-        INNER JOIN(
-            SELECT
-                set_number,
-                MAX(scan_date) AS scan_date
-            FROM
-                tbl_bricklink_prices
-            GROUP BY
-                set_number
-        ) AS MAX USING(set_number, scan_date)
-        WHERE set_number LIKE %s
-    """
-    return _execute_query(query, (set_number, ))
-
-def get_market_statistics_by_theme(theme='%'):
-    query = """
-        SELECT
-            tbl_sets.theme,
-            tbl_sets.subtheme,
-            AVG(tbl_sets.us_price) AS avg_us_price,
-            AVG(blp.qty_avg_price) AS qty_avg_price,
-            (
-                (
-                    AVG(blp.qty_avg_price) /(AVG(tbl_sets.us_price) / 100)
-                ) -100
-            ) AS difference_in_percent
-        FROM
-            tbl_sets
-        JOIN(
-            SELECT
-                *
-            FROM
-                tbl_bricklink_prices
-            INNER JOIN(
-                SELECT
-                    set_number,
-                    MAX(scan_date) AS scan_date
-                FROM
-                    tbl_bricklink_prices
-                GROUP BY
-                    set_number
-            ) AS MAX USING(set_number, scan_date)
-        ) AS blp
-        ON
-            tbl_sets.set_number = blp.set_number AND product_condition = 'new'
-        WHERE
-            tbl_sets.theme LIKE %s AND
-            tbl_sets.us_price IS NOT NULL AND
-            blp.qty_avg_price > 0
-        GROUP BY
-            tbl_sets.theme,
-            tbl_sets.subtheme
-        ORDER BY
-            difference_in_percent
-        DESC
-    """
-    return db.engine.execute(query, (theme, ))
 
 def get_market_statistics_for_sets():
     query = """
@@ -524,21 +295,7 @@ def get_market_statistics_for_sets():
             ) AS difference_in_percent
         FROM
             tbl_sets
-        JOIN(
-            SELECT
-                *
-            FROM
-                tbl_bricklink_prices
-            INNER JOIN(
-                SELECT
-                    set_number,
-                    MAX(scan_date) AS scan_date
-                FROM
-                    tbl_bricklink_prices
-                GROUP BY
-                    set_number
-            ) AS MAX USING(set_number, scan_date)
-        ) AS blp
+        JOIN tmp_newest_bricklink_prices AS blp
         ON
             tbl_sets.set_number = blp.set_number AND product_condition = 'new'
         WHERE
@@ -551,3 +308,6 @@ def get_market_statistics_for_sets():
         DESC
     """
     return _execute_query(query)
+
+if __name__ == '__main__':
+    get_latest_offers(70424)
