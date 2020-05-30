@@ -149,7 +149,7 @@ def get_new_listings():
     """
     return _execute_query(query)         
 
-def get_provider_deals(bl_treshold=0, lp_treshold=40, theme='%'):
+def get_provider_deals(bl_treshold=0, lp_treshold=40, query_pattern='%'):
     query = """
         SELECT
             *,
@@ -176,7 +176,6 @@ def get_provider_deals(bl_treshold=0, lp_treshold=40, theme='%'):
         WHERE
             blp.qty_avg_price > 0 AND
             tbl_sets.name IS NOT NULL AND 
-            tbl_sets.theme LIKE %s AND
             (
                 (
                     100 -(
@@ -188,7 +187,13 @@ def get_provider_deals(bl_treshold=0, lp_treshold=40, theme='%'):
                         tbl_provider_scans.price /(tbl_sets.ch_price / 100)
                     )
                 ) > %s
-            )
+            ) AND (
+                tbl_provider_scans.set_number LIKE %s OR
+                tbl_provider_scans.title LIKE %s OR
+                tbl_sets.name LIKE %s OR
+                tbl_sets.theme LIKE %s OR
+                tbl_sets.subtheme LIKE %s
+            ) 
         GROUP BY
             tbl_provider_scans.set_number,
             tbl_provider_scans.provider
@@ -196,7 +201,7 @@ def get_provider_deals(bl_treshold=0, lp_treshold=40, theme='%'):
             save_in_percentage_bl
         DESC
     """
-    return _execute_query(query, (theme, bl_treshold, lp_treshold))
+    return _execute_query(query, (bl_treshold, lp_treshold, query_pattern, query_pattern, query_pattern, query_pattern, query_pattern))
 
 def get_auction_deals():
     query = """

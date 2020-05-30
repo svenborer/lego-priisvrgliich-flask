@@ -39,10 +39,12 @@
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('set_statistics') }}"><strong>Set Statistics</strong></a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('scan_statistics') }}"><strong>Scan Statistics</strong></a>
-        </li>
       </ul>
+      <form class="form-inline" action="{{ url_for('search') }}">
+        <div class="md-form my-0">
+            <input class="form-control mr-sm-2" type="text" placeholder="search" aria-label="Search" name="q">
+        </div>
+    </form>
     </div>
   </nav>
 

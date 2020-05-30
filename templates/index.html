@@ -4,6 +4,10 @@
 
 <h1>Provider Deals</h1>
 
+{% if query %}
+<h3>Search: {{ query }}</h3>
+{% endif %}
+
 <table class="table table-sm" width="100%">    <thead>
         <tr>
             <th scope="col"></th>

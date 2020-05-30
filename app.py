@@ -2,6 +2,7 @@
 import os
 import re
 from flask import Flask
+from flask import request
 from flask_caching import Cache
 from helper import get_availability_score
 
@@ -168,6 +169,13 @@ def sets_by_theme(theme):
     if sets:
         return render_template('sets_by_theme.html', sets=sets)
     return render_template('404.html'), 404
+
+@app.route("/lego-priisvrgliich/search/", methods=['GET'])
+def search():
+    query = request.args.get('q')
+    query_pattern = '%{}%'.format(query)
+    provider_deals = q.get_provider_deals(bl_treshold=-999, lp_treshold=-999, query_pattern=query_pattern)
+    return render_template('index.html', provider_deals=provider_deals, query=query)
 
 @app.errorhandler(404)
 def not_found_error(error):
