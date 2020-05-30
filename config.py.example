@@ -1,5 +1,7 @@
+import socket
+
 class Config(object):
-    SQLALCHEMY_DATABASE_URI = 'mysql://sergej:password@127.0.0.1/sergej_lego-priisvrgliich' 
+    SQLALCHEMY_DATABASE_URI = 'mysql://username:password@127.0.0.1/database'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 _config = {
@@ -10,7 +12,6 @@ _config = {
             'theme' : ['Ideas', 'Hidden Side', 'Creator Expert', 'Jurassic World', 'Jurassic Park'],
             'subtheme' : ['Episode IV', 'Episode V', 'Episode VI', 'Ultimate Collector Series', 'The Mandalorian', 'The Clone Wars']
         },
-        'blacklist' : ['1974', '1967', '9800', '1985', '2008', '1018', '1983', '2017', '1981', '2018'],
         'title_blacklist' : ['Anleitung', 'Anleitungen', 'Bauplan', 'emploi', 'Verkleidung', 'Sticker', 'Bauanleitung']
     },
     'availability' : {
@@ -18,5 +19,6 @@ _config = {
         'available' : ['Ware neu eingetroffen, in Kürze versandfertig', 'Auf Lager', 'available_stock', 'ship_only_fast', 'E_AVAILABLE', 'AVAILABLE', 'FULLGREENEXTRA', 'SUPPLIERSTOCKWITHDIRECTDELIVERY', 'THREEQUARTERS', 'FULLGREEN'],
         'limited' : ['Ware im Zulauf, voraussichtlich verfügbar in Tagen', 'HALF', 'Liefertermin in Klärung', 'F_BACKORDER_FOR_DATE', 'G_BACKORDER', 'SUPPLIERNOSTOCKWITHDIRECTDELIVERY', 'REQUESTPOSSIBLE', 'available_clarification'],
         'out_of_stock' : ['K_SOLD_OUT', 'H_OUT_OF_STOCK', 'UNAVAILABLE']
-    }
+    },
+    'colors' : ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722', '#795548', '#9e9e9e', '#607d8b']
 }
