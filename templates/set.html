@@ -7,37 +7,37 @@
 {% for info in set_information %}
     <p><a href="{{ url_for('sets_by_theme', theme=info['theme']) }}">{{ info['theme'] }}</a> > {{ info['subtheme'] }}</p>
     <p>
-        This is set number <b>{{ info['set_number'] }} {{ info['name'] }}</b>.
-        This set has been released in <b>{{ info['year'] }}</b>.
+        Das isch d Set nummere <b>{{ info['set_number'] }} {{ info['name'] }}</b>.
+        Es isch im Joor <b>{{ info['year'] }}</b> veröffentlicht worde.
         {% if info['ch_price'] %}
-            It has a RRP of <b>{{ info['ch_price'] }} CHF</b>.
+            Das Set het e Unvrbindligi Priisempfehlig vo <b>{{ info['ch_price'] }} CHF</b>.
         {% else %}
-            RRP is not available.
+            E UVP fuer das Set isch leider nit vrfiegbar.
         {% endif %}
-        The set contains of <b>{{ info['pieces'] }}</b> pieces and <b>{{ info['minifigs'] if info['minifigs'] else 0 }}</b> minifigs{{ ' , therefore has an original {} CHF per LEGO piece'.format((info['ch_price']/info['pieces'])|round(2)) if info['ch_price'] and info['pieces'] }}.
+        Das Set het <b>{{ info['pieces'] }}</b> Stei und <b>{{ info['minifigs'] if info['minifigs'] else 0 }}</b> Minifigure{{ ' , also hets e original {} CHF pro LEGO stei'.format((info['ch_price']/info['pieces'])|round(2)) if info['ch_price'] and info['pieces'] }}.
         {% if offers %}
-            The current low price of this set is <b>{{ offers[0]['price'] }} CHF</b> offered by <b>{{ offers[0]['provider'] }}</b>, which translates to <b>{{ '{} CHF'.format((offers[0]['price']/info['pieces'])|round(2)) if offers[0]['price'] and info['pieces'] else 'N/A' }}</b> per LEGO piece.
+            S aktuell tiefschte Ahgebot liggt bi <b>{{ offers[0]['price'] }} CHF</b> und wird vo <b>{{ offers[0]['provider'] }}</b> ahbotte, das entspricht <b>{{ '{} CHF'.format((offers[0]['price']/info['pieces'])|round(2)) if offers[0]['price'] and info['pieces'] else 'N/A' }}</b> pro LEGO Stei.
             {% if info['ch_price'] %}
-                You will save <b>{{ (info['ch_price']-offers[0]['price'])|round(2) }} CHF</b>, which is <b>{{ '{}%'.format(offers[0]['save_in_percentage_lp']|round(0)) }}</b>.
+                Du wirdsch <b>{{ (info['ch_price']-offers[0]['price'])|round(2) }} CHF</b> spaare, was umgraechnet <b>{{ '{}%'.format(offers[0]['save_in_percentage_lp']|round(0)) }}</b> entspricht.
             {% endif %}
         {% else %}
-            This set is currently not on the market.
+            Das Set isch momentan nit ufem Maert.
         {% endif %}
     </p>
 {% endfor %}
 
-<h2>Information</h2>
+<h2>Informatione</h2>
 <table class="table">
     <thead>
         <tr>
             <th scope="col">#</th>
             <th scope="col">Name</th>
-            <th scope="col">Year</th>
-            <th scope="col">Theme</th>
-            <th scope="col">Subtheme</th>
-            <th scope="col">Pieces</th>
-            <th scope="col">Minifigs</th>
-            <th scope="col">RRP</th>
+            <th scope="col">Joor</th>
+            <th scope="col">Thema</th>
+            <th scope="col">Unterthema</th>
+            <th scope="col">Stei</th>
+            <th scope="col">Minifigure</th>
+            <th scope="col">UVP</th>
             <th scope="col">Bricklink</th>
         </tr>
     </thead>
@@ -60,16 +60,16 @@
 
 {% if offers %}
 
-<h2>Offers</h2>
+<h2>Aktuelli Ahgebot</h2>
 <table class="table">
     <thead>
         <tr>
             <th scope="col"></th>
-            <th scope="col">Provider</th>
+            <th scope="col">Ahbieter</th>
             <th scope="col">URL</th>
-            <th scope="col">Price</th>
-            <th scope="col">RRP Save</th>
-            <th scope="col">BL Save</th>
+            <th scope="col">Priis</th>
+            <th scope="col">UVP Differänz</th>
+            <th scope="col">BL Differänz</th>
             <th scope="col">Scan ID</th>
         </tr>
     </thead>
@@ -100,7 +100,7 @@
             {% endif %}
             </td>
             <td>{{ offer['provider'] }}</td>
-            <td><a href="{{ offer['url'] }}">Click here to go to the offer.</a></td>
+            <td><a href="{{ offer['url'] }}">Do gohts zum Ahgebot.</a></td>
             <td>{{ offer['price']|round(2) }} CHF</td>
             <td>{{ '{}%'.format(offer['save_in_percentage_lp']|round(0)) if offer['save_in_percentage_lp'] else 0 }}</td>
             <td>{{ '{}%'.format(offer['save_in_percentage_bl']|round(0)) if offer['save_in_percentage_bl'] else 'N/A' }}</td>
@@ -114,7 +114,7 @@
 
 {% if prices%}
 
-<h2>Price Charts</h2>
+<h2>Priis Chart</h2>
 
 {% include '_price_chart.html' %}
 

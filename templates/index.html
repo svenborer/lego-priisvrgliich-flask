@@ -2,36 +2,28 @@
 
 {% block content %}
 
-<h1>Provider Deals</h1>
+<h1>Aktuelli Deals</h1>
 
 {% if query %}
-<h3>Search: {{ query }}</h3>
+<h3>Suech Parameter: {{ query }}</h3>
 {% endif %}
 
 <table class="table table-sm" width="100%">    <thead>
         <tr>
             <th scope="col"></th>
-            <th scope="col"></th>
             <th scope="col">#</th>
             <th scope="col">Name</th>
-            <th scope="col">Year</th>
-            <th scope="col">Theme</th>
-            <th scope="col">Provider</th>
-            <th scope="col">Price</th>
-            <th scope="col">RRP</th>
+            <th scope="col">Joor</th>
+            <th scope="col">Thema</th>
+            <th scope="col">Ahbieter</th>
+            <th scope="col">Priis</th>
+            <th scope="col">UVP</th>
             <th scope="col">Bricklink</th>
         </tr>
     </thead>
     <tbody>
         {% for deal in provider_deals %}
         <tr>
-            <td>
-                {% if deal['is_favorite'] %}
-                    <i class="fas fa-star"></i>
-                {% else %}
-                    <i class="far fa-star"></i>
-                {% endif%}
-            </td>
             <td>
                 {% if deal['availability'] == 3 %}
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #73c44d; fill: currentColor;">
@@ -55,7 +47,7 @@
                     </svg>
                 {% endif %}
             </td>
-            <td><a href="{{ url_for('set_information', set_number=deal['set_number']) }}">{{ deal['set_number'] }}</a></td>
+            <td><i><a href="{{ url_for('set_information', set_number=deal['set_number']) }}">{{ deal['set_number'] }}</a></i></td>
             <td><a href="{{ deal['url'] }}">{{ deal['name'] }}</a></td>
             <td>{{ deal['year'] }}</td>
             <td><a href="{{ url_for('sets_by_theme', theme=deal['theme']) }}">{{ deal['theme'] }}</a>/{{ deal['subtheme'] }}</td>
