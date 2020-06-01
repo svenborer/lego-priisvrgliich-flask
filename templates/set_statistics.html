@@ -8,46 +8,46 @@
     <h2>{{ theme }}</h2>
     {% for subtheme in records[theme] %}
 
-    {% if records[theme][subtheme] %}
+        {% if records[theme][subtheme] %}
 
-    <h4>{{ subtheme }}</h4>
-
-    <table class="table">
-        <thead>
-            <tr>
-                <th scope="col"></th>
-                <th scope="col">#</th>
-                <th scope="col">Name</th>
-                <th scope="col">Joor</th>
-                <th scope="col">Theme</th>
-                <th scope="col">Unterthema</th>
-                <th scope="col">UVP</th>
-                <th scope="col">Bricklink Priis</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for set in records[theme][subtheme] %}
-            <tr>
-                <td>
-                    {% if set['is_currently_on_market'] %}
-                        <i class="fas fa-circle" style="color:greenyellow;"></i>
-                    {% else %}
-                        <i class="fas fa-circle" style="color:orangered;"></i>
-                    {% endif%}
-                </td>
-                <td>{{ set['set_number'] }}</td>
-                <td>{{ set['name'] }}</td>
-                <td>{{ set['year'] }}</td>
-                <td>{{ set['theme'] }}</td>
-                <td>{{ set['subtheme'] }}</td>
-                <td>{{ set['us_price']|round(2) }} USD</td>
-                <td>{{ set['qty_avg_price']|round(2) }} USD (<b>{{ set['difference_in_percent']|round(1) }}%</b>)</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    {% endif %}
+        <h4>{{ subtheme }}</h4>
+        <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col">#</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Joor</th>
+                    <th scope="col">Theme</th>
+                    <th scope="col">Unterthema</th>
+                    <th scope="col">UVP</th>
+                    <th scope="col">Bricklink Priis</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for set in records[theme][subtheme] %}
+                <tr>
+                    <td>
+                        {% if set['is_currently_on_market'] %}
+                            <i class="fas fa-circle" style="color:greenyellow;"></i>
+                        {% else %}
+                            <i class="fas fa-circle" style="color:orangered;"></i>
+                        {% endif%}
+                    </td>
+                    <td>{{ set['set_number'] }}</td>
+                    <td>{{ set['name'] }}</td>
+                    <td>{{ set['year'] }}</td>
+                    <td>{{ set['theme'] }}</td>
+                    <td>{{ set['subtheme'] }}</td>
+                    <td>{{ set['us_price']|round(2) }} USD</td>
+                    <td>{{ set['qty_avg_price']|round(2) }} USD (<b>{{ set['difference_in_percent']|round(1) }}%</b>)</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% endif %}
 
     {% endfor %}
 {% endfor %}

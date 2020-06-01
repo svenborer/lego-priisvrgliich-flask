@@ -27,6 +27,7 @@
 {% endfor %}
 
 <h2>Informatione</h2>
+<div class="table-responsive">
 <table class="table">
     <thead>
         <tr>
@@ -47,7 +48,7 @@
             <td>{{ info['set_number'] }}</td>
             <td>{{ info['name'] }}</td>
             <td>{{ info['year'] }}</td>
-            <td>{{ info['theme'] }}</td>
+            <td><i><a href="{{ url_for('sets_by_theme', theme=info['theme']) }}"></a>{{ info['theme'] }}</td>
             <td>{{ info['subtheme'] }}</td>
             <td>{{ info['pieces'] }}</td>
             <td>{{ info['minifigs'] }}</td>
@@ -57,20 +58,20 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 
 {% if offers %}
 
 <h2>Aktuelli Ahgebot</h2>
+<div class="table-responsive">
 <table class="table">
     <thead>
         <tr>
             <th scope="col"></th>
             <th scope="col">Ahbieter</th>
-            <th scope="col">URL</th>
             <th scope="col">Priis</th>
             <th scope="col">UVP Differänz</th>
             <th scope="col">BL Differänz</th>
-            <th scope="col">Scan ID</th>
         </tr>
     </thead>
     <tbody>
@@ -99,16 +100,15 @@
                 </svg>
             {% endif %}
             </td>
-            <td>{{ offer['provider'] }}</td>
-            <td><a href="{{ offer['url'] }}">Do gohts zum Ahgebot.</a></td>
+            <td><i><a href="{{ offer['url'] }}">{{ offer['provider'] }} (Do gohts diraeggt zum Ahgebot)</a></i></td>
             <td>{{ offer['price']|round(2) }} CHF</td>
             <td>{{ '{}%'.format(offer['save_in_percentage_lp']|round(0)) if offer['save_in_percentage_lp'] else 0 }}</td>
             <td>{{ '{}%'.format(offer['save_in_percentage_bl']|round(0)) if offer['save_in_percentage_bl'] else 'N/A' }}</td>
-            <td>{{ offer['scan_id'] }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</div>
 
 {% endif %}
 
@@ -116,8 +116,9 @@
 
 <h2>Priis Chart</h2>
 
+<div class="table-responsive">
 {% include '_price_chart.html' %}
-
+</div>
 {% endif %}
 
 {% endblock %}
