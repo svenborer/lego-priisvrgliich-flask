@@ -1,8 +1,10 @@
 #!/usr/bin/env python3.6
+from statistics import mean
 import os
 import re
 from flask import Flask
 from flask import request
+from flask import jsonify
 from flask_caching import Cache
 from helper import get_availability_score
 
@@ -21,6 +23,8 @@ cache.init_app(app, config={'CACHE_TYPE': 'simple'})
 
 import queries as q
 import models
+
+from models import Subscription
 
 wl_set_number = _config['scanner']['wishlist']['set_number']
 wl_theme = _config['scanner']['wishlist']['theme']
@@ -166,8 +170,12 @@ def scan_statistics():
 @app.route("/lego-priisvrgliich/theme/<theme>")
 def sets_by_theme(theme):
     sets = q.get_sets_on_market_unique(theme=theme)
+    all_sets = q.get_sets(theme=theme)
+    biggest_set = max([x for x in all_sets if x['pieces']], key=lambda x:x['pieces'])
+    cost_per_piece = mean([(x['ch_price']/x['pieces']) for x in all_sets if x['ch_price'] and x['pieces']])
+    birthyear = min(all_sets, key=lambda x:x['year'])['year']
     if sets:
-        return render_template('sets_by_theme.html', sets=sets)
+        return render_template('sets_by_theme.html', sets=sets, cost_per_piece=cost_per_piece, biggest_set=biggest_set, birthyear=birthyear)
     return render_template('404.html'), 404
 
 @app.route("/lego-priisvrgliich/search/", methods=['GET'])
@@ -176,6 +184,17 @@ def search():
     query_pattern = '%{}%'.format(query)
     provider_deals = q.get_provider_deals(bl_treshold=-999, lp_treshold=-999, query_pattern=query_pattern)
     return render_template('index.html', provider_deals=provider_deals, query=query)
+
+@app.route("/lego-priisvrgliich/subscribe/set/<set_number>", methods=['POST', 'GET'])
+def subscribe_set_number(set_number):
+    if request.method == 'POST':
+        email = request.form.get('email')
+        price_treshold = request.form.get('price_treshold')
+        s = Subscription(set_number = set_number, email = email, price_treshold = price_treshold)
+        db.session.add(s)
+        db.session.commit()
+        return {'data' : {'set_number' : set_number, 'email' : email, 'price_treshold' : price_treshold }}
+    return {'error' : 'no_data'}
 
 @app.errorhandler(404)
 def not_found_error(error):

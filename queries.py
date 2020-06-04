@@ -96,6 +96,17 @@ def get_sets_on_market_unique(theme='%'):
     """
     return _execute_query(query, (theme, ))
 
+def get_sets(theme='%'):
+    query = """
+        SELECT
+            *
+        FROM
+            tbl_sets
+        WHERE
+            theme = %s
+    """
+    return _execute_query(query, (theme, ))
+
 def get_set_information(set_number='%'):
     query = """
         SELECT

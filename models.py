@@ -25,3 +25,9 @@ class BricklinkPrice(db.Model):
 
     def __repr__(self):
         return '<BricklinkPrice {}>'.format(self.id)
+
+class Subscription(db.Model):
+    __table__ = db.Model.metadata.tables['tbl_subscriptions']
+
+    def __repr__(self):
+        return '<Subscribtion {}>'.format(self.id)

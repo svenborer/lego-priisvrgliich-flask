@@ -2,29 +2,43 @@
 
 {% block content %}
 
-<h1>{{ set_number }}</h1>
-
-{% for info in set_information %}
-    <p><a href="{{ url_for('sets_by_theme', theme=info['theme']) }}">{{ info['theme'] }}</a> > {{ info['subtheme'] }}</p>
-    <p>
-        Das isch d Set nummere <b>{{ info['set_number'] }} {{ info['name'] }}</b>.
-        Es isch im Joor <b>{{ info['year'] }}</b> veröffentlicht worde.
-        {% if info['ch_price'] %}
-            Das Set het e Unvrbindligi Priisempfehlig vo <b>{{ info['ch_price'] }} CHF</b>.
-        {% else %}
-            E UVP fuer das Set isch leider nit vrfiegbar.
-        {% endif %}
-        Das Set het <b>{{ info['pieces'] }}</b> Stei und <b>{{ info['minifigs'] if info['minifigs'] else 0 }}</b> Minifigure{{ ' , also hets e original {} CHF pro LEGO stei'.format((info['ch_price']/info['pieces'])|round(2)) if info['ch_price'] and info['pieces'] }}.
-        {% if offers %}
-            S aktuell tiefschte Ahgebot liggt bi <b>{{ offers[0]['price'] }} CHF</b> und wird vo <b>{{ offers[0]['provider'] }}</b> ahbotte, das entspricht <b>{{ '{} CHF'.format((offers[0]['price']/info['pieces'])|round(2)) if offers[0]['price'] and info['pieces'] else 'N/A' }}</b> pro LEGO Stei.
-            {% if info['ch_price'] %}
-                Du wirdsch <b>{{ (info['ch_price']-offers[0]['price'])|round(2) }} CHF</b> spaare, was umgraechnet <b>{{ '{}%'.format(offers[0]['save_in_percentage_lp']|round(0)) }}</b> entspricht.
-            {% endif %}
-        {% else %}
-            Das Set isch momentan nit ufem Maert.
-        {% endif %}
-    </p>
-{% endfor %}
+<div class="container">
+    <div class="row">
+      <div class="col-md-8">
+            <h1>{{ set_number }}</h1>
+            {% for info in set_information %}
+                <p><a href="{{ url_for('sets_by_theme', theme=info['theme']) }}">{{ info['theme'] }}</a> > {{ info['subtheme'] }}</p>
+                <p>
+                    Das isch d Set nummere <b>{{ info['set_number'] }} {{ info['name'] }}</b>.
+                    Es isch im Joor <b>{{ info['year'] }}</b> veröffentlicht worde.
+                    {% if info['ch_price'] %}
+                        Das Set het e Unvrbindligi Priisempfehlig vo <b>{{ info['ch_price'] }} CHF</b>.
+                    {% else %}
+                        E UVP fuer das Set isch leider nit vrfiegbar.
+                    {% endif %}
+                    S beinhaltet <b>{{ info['pieces'] }}</b> Stei und <b>{{ info['minifigs'] if info['minifigs'] else 0 }}</b> Minifigure{{ ' , also hets e original {} CHF pro LEGO stei'.format((info['ch_price']/info['pieces'])|round(2)) if info['ch_price'] and info['pieces'] }}.
+                    {% if offers %}
+                        S aktuell tiefschte Ahgebot liggt bi <b>{{ offers[0]['price'] }} CHF</b> und wird vo <b>{{ offers[0]['provider'] }}</b> ahbotte, das entspricht <b>{{ '{} CHF'.format((offers[0]['price']/info['pieces'])|round(2)) if offers[0]['price'] and info['pieces'] else 'N/A' }}</b> pro LEGO Stei.
+                        {% if info['ch_price'] %}
+                            Du wirdsch <b>{{ (info['ch_price']-offers[0]['price'])|round(2) }} CHF</b> spaare, was umgraechnet <b>{{ '{}%'.format(offers[0]['save_in_percentage_lp']|round(0)) }}</b> entspricht.
+                        {% endif %}
+                    {% else %}
+                        Das Set isch momentan nit ufem Maert.
+                    {% endif %}
+                </p>
+            {% endfor %}
+        </div>
+        <div class="col-md-4">
+            <h2>Priis Alarm</h2>
+            <form class="text-center border border-light p-5" id="price_alarm">
+                e-Mail Adraesse: <input type="email" name="email" class="form-control mb-4" placeholder="E-mail">
+                Ahpeilte Priis in CHF: <input type="number" name="price_treshold" class="form-control mb-4" placeholder="Priis in CHF">
+                <button class="btn btn-info btn-block my-4 red accent-4">Subscribe</button>
+                <p id="price_alarm_result"></p>
+            </form>
+        </div>
+    </div>
+</div>
 
 <h2>Informatione</h2>
 <div class="table-responsive">
@@ -61,7 +75,6 @@
 </div>
 
 {% if offers %}
-
 <h2>Aktuelli Ahgebot</h2>
 <div class="table-responsive">
 <table class="table">
@@ -109,16 +122,28 @@
     </tbody>
 </table>
 </div>
-
 {% endif %}
 
-{% if prices%}
-
+{% if prices %}
 <h2>Priis Chart</h2>
-
 <div class="table-responsive">
 {% include '_price_chart.html' %}
 </div>
 {% endif %}
+
+<script type="text/javascript" src="/lego-priisvrgliich/static/js/jquery.min.js"></script>
+<script>
+$( "#price_alarm" ).submit(function( event ) {
+ event.preventDefault();
+ $( "#price_alarm_result" ).text( 'Am usfiehre ...' )
+ var posting = $.post("/lego-priisvrgliich/subscribe/set/{{ set_number }}", $( "#price_alarm" ).serialize() );
+ posting.done(function(data) {
+   $( "#price_alarm_result" ).empty().append( '<span style="color: limegreen;"><i class="fas fa-check-circle"></i></span> Erledigt.' )
+ });
+ posting.fail(function(data) {
+   $( "#price_alarm_result" ).text( '<span style="color: red;"><i class="fas fa-times-circle"></i></span> Oops. Oepis isch schiefgloffe.' )
+ });
+});
+</script>
 
 {% endblock %}
