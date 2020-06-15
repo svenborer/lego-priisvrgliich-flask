@@ -31,3 +31,9 @@ class Subscription(db.Model):
 
     def __repr__(self):
         return '<Subscribtion {}>'.format(self.id)
+
+class SubscriptionTheme(db.Model):
+    __table__ = db.Model.metadata.tables['tbl_subscriptions_theme']
+
+    def __repr__(self):
+        return '<SubscriptionTheme {}>'.format(self.id)

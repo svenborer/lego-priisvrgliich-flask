@@ -24,7 +24,7 @@ cache.init_app(app, config={'CACHE_TYPE': 'simple'})
 import queries as q
 import models
 
-from models import Subscription
+from models import Subscription, SubscriptionTheme
 
 wl_set_number = _config['scanner']['wishlist']['set_number']
 wl_theme = _config['scanner']['wishlist']['theme']
@@ -194,6 +194,17 @@ def subscribe_set_number(set_number):
         db.session.add(s)
         db.session.commit()
         return {'data' : {'set_number' : set_number, 'email' : email, 'price_treshold' : price_treshold }}
+    return {'error' : 'no_data'}
+
+@app.route("/lego-priisvrgliich/subscribe/theme/<theme>", methods=['POST', 'GET'])
+def subscribe_theme(theme):
+    if request.method == 'POST':
+        email = request.form.get('email')
+        save_treshold = request.form.get('save_treshold')
+        s = SubscriptionTheme(theme=theme, email=email, save_treshold=save_treshold)
+        db.session.add(s)
+        db.session.commit()
+        return {'email' : email, 'save_treshold' : save_treshold, 'theme' : theme}
     return {'error' : 'no_data'}
 
 @app.errorhandler(404)
