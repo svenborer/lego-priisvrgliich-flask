@@ -4,10 +4,10 @@
 <div class="container">
     <div class="row">
         <div class="col-md-8">
-            <h1>{{ sets[0]['theme'] }}</h1>
-            <p>Es sind momentan <b>{{ sets|length }} Sets</b> vom Themegebiet "{{ sets[0]['theme'] }}" ufem Maert.
+            <h1><a href="{{ url_for('sets_by_theme', theme=sets[0]['theme']) }}">{{ sets[0]['theme'] }}</a>{% if subtheme != '%' %} > <a href="{{ url_for('sets_by_theme', theme=sets[0]['theme'], subtheme=subtheme) }}">{{ subtheme }}</a> {% endif %}</h1>
+            <p>Es sind momentan <b>{{ sets|length }} Sets</b> vom Themegebiet <b>{{ sets[0]['theme'] }}</b> ufem Maert.
                 Historisch gseh choschtet e Stei in dere Setreihe circa <b>{{ cost_per_piece|round(2) }} CHF</b>. S
-                thema "{{ sets[0]['theme'] }}" existiert sit em Joor <b>{{ birthyear }}</b>.</p>
+                thema <b>{{ sets[0]['theme'] }}</b> existiert sit em Joor <b>{{ birthyear }}</b>.</p>
         </div>
         <div class="col-md-4">
             <h2>Rabatt Alarm</h2>
@@ -22,37 +22,62 @@
     </div>
 </div>
 
+<h2>Momentan vrfiegbari Sets</h2>
+
 <div class="table-responsive">
-    <table class="table table-sm" width="100%">
+    <table id="dtDeals" class="table table-sm" width="100%">
         <thead>
             <tr>
+                <th scope="col"></th>
                 <th scope="col">#</th>
                 <th scope="col">Name</th>
                 <th scope="col">Joor</th>
                 <th scope="col">Unterthema</th>
                 <th scope="col">Baustei</th>
                 <th scope="col">Minifigs</th>
+                <th scope="col">Tiefschtpriis</th>
                 <th scope="col">UVP</th>
+                <th scope="col">Rabatt</th>
             </tr>
         </thead>
         <tbody>
             {% for s in sets %}
             <tr>
-                <td><a href="{{ url_for('set_information', set_number=s['set_number']) }}">{{ s['set_number'] }}</a>
+                <td>
+                    {% if s['i_have'] %}
+                        <i class="fas fa-star"></i>
+                    {% elif s['i_want'] %}
+                        <i class="far fa-star"></i>
+                    {% endif %}
                 </td>
+                <td><i><a href="{{ url_for('set_information', set_number=s['set_number']) }}">{{ s['set_number'] }}</a></i></td>
                 <td>{{ s['name'] }}</td>
                 <td>{{ s['year'] }}</td>
-                <td>{{ s['subtheme'] }}</td>
-                <td>{{ s['pieces'] }}</td>
-                <td>{{ s['minifigs'] }}</td>
-                <td>{{ '{} CHF'.format(s['ch_price']) if s['ch_price'] else 'N/A' }}</td>
+                <td><i><a href="{{ url_for('sets_by_theme', theme=s['theme'], subtheme=s['subtheme']) }}">{{ s['subtheme'] }}</a></i></td>
+                <td>{{ s['pieces'] if s['pieces'] else 0 }}</td>
+                <td>{{ s['minifigs'] if s['minifigs'] else 0 }}</td>
+                <td><b>{{ '%0.2f CHF'| format(s['current_low_price']|float) }}</b></td>
+                <td style="color: grey;">{{ '%0.2f CHF'| format(s['ch_price']|float) if s['ch_price'] else 'Unbekannt' }}</td>
+                <td>
+                    {% if s['uvp_rabatt'] %}
+                        <b>{{ '{}%'.format(s['uvp_rabatt']|int) }}</b>
+                    {% elif s['current_low_price']|int == s['ch_price']|int %}
+                        <b>0%</b>
+                    {% else %}
+                        -1%
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-<script type="text/javascript" src="/lego-priisvrgliich/static/js/jquery.min.js"></script>
+<h2>UVP/Tiefschtpriis zu Stei Chart</h2>
+<div class="table-responsive">
+    {% include '_scatter_chart.html' %}
+</div>
+
 <script>
     $("#price_alarm").submit(function (event) {
         event.preventDefault();
@@ -64,6 +89,17 @@
         posting.fail(function (data) {
             $("#price_alarm_result").empty().append('<span style="color: red;"><i class="fas fa-times-circle"></i></span> Oops. Oepis isch schiefgloffe.')
         });
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        $('#dtDeals').DataTable({
+            "order": [[ 9, "desc" ]],
+            "paging": false,
+            "searching": false
+        });
+        $('.dataTables_length').addClass('bs-select');
     });
 </script>
 

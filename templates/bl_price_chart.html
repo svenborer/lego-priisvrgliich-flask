@@ -1,4 +1,4 @@
-<canvas id="canvas"></canvas>
+<canvas id="bl_canvas"></canvas>
 <script src="/lego-priisvrgliich/static/js/chartjs-plugin-zoom.js"></script>
 <script src="/lego-priisvrgliich/static/js/chartjs-plugin-annotation.min.js"></script>
 <script>
@@ -6,28 +6,26 @@
         type: 'line',
         data: {
             labels: [
-                {% for date in dates -%}
-                    "{{ date }}",
+                {% for date in prices -%}
+                    '{{ date }}',
                 {%- endfor %}
             ],
             datasets: [
-                {% for provider in prices %}
                     {
-                    label: '{{ provider }}',
+                    label: 'Bricklink',
                     fill: false,
-                    backgroundColor: '{{ prices[provider]["color"] }}',
-                    borderColor: '{{ prices[provider]["color"] }}',
+                    backgroundColor: '#f44336',
+                    borderColor: '#f44336',
+                    spanGaps: true,
                     borderWidth: 1,
                     pointRadius: 1,
-                    spanGaps: true,
                     data: [
-                    {% for price in prices[provider]["prices"] -%}
-                        {{ price }},
+                    {% for date in prices -%}
+                        {{ prices[date] }},
                     {%- endfor %}
                     ]},
-                {% endfor %}
-                ],
-            },
+            ],
+        },
         options: {
             legend: {
                 display: false
@@ -51,41 +49,6 @@
                     }
                 }],
             },
-            annotation: {
-                drawTime: 'afterDatasetsDraw',
-                annotations: [
-                    {% if blv %}
-                    {
-                    id: 'blv',
-                    type: 'line',
-                    mode: 'horizontal',
-                    scaleID: 'y-axis-0',
-                    value: {{ blv }},
-                    borderColor: 'black',
-                    borderWidth: 1,
-                    label: {
-                        backgroundColor: 'black',
-                        content: 'BLV',
-                        enabled: true
-                    }}
-                    {% endif %}
-                    {% if uvp %}
-                    , {
-                    id: 'uvp',
-                    type: 'line',
-                    mode: 'horizontal',
-                    scaleID: 'y-axis-0',
-                    value: {{ uvp }},
-                    borderColor: 'black',
-                    borderWidth: 1,
-                    label: {
-                        backgroundColor: 'black',
-                        content: 'UVP',
-                        enabled: true
-                    }}
-                    {% endif %}
-                ]
-            }, 
             plugins: {
                 zoom: {
                     // Container for pan options
@@ -116,6 +79,6 @@
         }
     };
 
-    var ctx = document.getElementById('canvas').getContext('2d');
+    var ctx = document.getElementById('bl_canvas').getContext('2d');
     window.myLine = new Chart(ctx, config);
 </script>

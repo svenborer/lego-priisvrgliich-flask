@@ -5,11 +5,11 @@
 <div class="container">
     <div class="row">
         <div class="col-md-8">
-            <h1>{{ set_number }}</h1>
             {% for info in set_information %}
-            <p><a href="{{ url_for('sets_by_theme', theme=info['theme']) }}">{{ info['theme'] }}</a> >
-                {{ info['subtheme'] }}</p>
-            <p>
+                <h1>{{ info['set_number'] }} {{ info['name'] }}</h1>
+                <p><a href="{{ url_for('sets_by_theme', theme=info['theme']) }}">{{ info['theme'] }}</a> >
+                    <a href="{{ url_for('sets_by_theme', theme=info['theme'], subtheme=info['subtheme']) }}">{{ info['subtheme'] }}</a></p>
+                <p>
                 Das isch d Set nummere <b>{{ info['set_number'] }} {{ info['name'] }}</b>.
                 Es isch im Joor <b>{{ info['year'] }}</b> veröffentlicht worde.
                 {% if info['ch_price'] %}
@@ -23,7 +23,7 @@
                 {% if offers %}
                 S aktuell tiefschte Ahgebot liggt bi <b>{{ offers[0]['price'] }} CHF</b> und wird vo
                 <b>{{ offers[0]['provider'] }}</b> ahbotte, das entspricht
-                <b>{{ '{} CHF'.format((offers[0]['price']/info['pieces'])|round(2)) if offers[0]['price'] and info['pieces'] else 'N/A' }}</b>
+                <b>{{ '{} Rappe'.format(((offers[0]['price']/info['pieces'])*100)|int) if offers[0]['price'] and info['pieces'] else 'N/A' }}</b>
                 pro LEGO Stei.
                 {% if info['ch_price'] %}
                 Du wirdsch <b>{{ (info['ch_price']-offers[0]['price'])|round(2) }} CHF</b> spaare, was umgraechnet
@@ -33,7 +33,9 @@
                 Das Set isch momentan nit ufem Maert.
                 {% endif %}
             </p>
+            <img src="{{ info['image_url'] }}" style="width:66%;"></img><br>
             {% endfor %}
+            <img >
         </div>
         <div class="col-md-4">
             <h2>Priis Alarm</h2>
@@ -70,13 +72,12 @@
                 <td>{{ info['set_number'] }}</td>
                 <td>{{ info['name'] }}</td>
                 <td>{{ info['year'] }}</td>
-                <td><i><a href="{{ url_for('sets_by_theme', theme=info['theme']) }}"></a>{{ info['theme'] }}</td>
-                <td>{{ info['subtheme'] }}</td>
+                <td><i><a href="{{ url_for('sets_by_theme', theme=info['theme']) }}">{{ info['theme'] }}</a></i></td>
+                <td><i><a href="{{ url_for('sets_by_theme', theme=info['theme'], subtheme=info['subtheme']) }}">{{ info['subtheme'] }}</a></i></td>
                 <td>{{ info['pieces'] }}</td>
                 <td>{{ info['minifigs'] }}</td>
-                <td>{{ info['ch_price'] if info['ch_price'] }} CHF</td>
-                <td>{{ '{} CHF ({}%)'.format(info['qty_avg_price'], info['difference']|round(0)) if info['difference'] else 'N/A' }}
-                </td>
+                <td>{{ '%0.2f CHF'| format(info['ch_price']|float) if info['ch_price'] else 'Unbekannt' }}</td>
+                <td>{{ '%0.2f CHF'| format(info['qty_avg_price']|float) if info['difference'] else 'Unbekannt' }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -89,11 +90,12 @@
     <table class="table">
         <thead>
             <tr>
-                <th scope="col"></th>
+                <th scope="col">Vrfiegbarkeit</th>
                 <th scope="col">Ahbieter</th>
                 <th scope="col">Priis</th>
-                <th scope="col">UVP Differänz</th>
-                <th scope="col">BL Differänz</th>
+                <th scope="col">UVP Differaenz</th>
+                <th scope="col">Bricklink Differaenz</th>
+                <th scope="col">Scan Ziitpunggt</th>
             </tr>
         </thead>
         <tbody>
@@ -127,12 +129,11 @@
                     </svg>
                     {% endif %}
                 </td>
-                <td><i><a href="{{ offer['url'] }}">{{ offer['provider'] }} (Do gohts diraeggt zum Ahgebot)</a></i></td>
-                <td>{{ offer['price']|round(2) }} CHF</td>
-                <td>{{ '{}%'.format(offer['save_in_percentage_lp']|round(0)) if offer['save_in_percentage_lp'] else 0 }}
-                </td>
-                <td>{{ '{}%'.format(offer['save_in_percentage_bl']|round(0)) if offer['save_in_percentage_bl'] else 'N/A' }}
-                </td>
+                <td><i><a href="{{ offer['url'] }}">{{ offer['provider'] }}</a></i> <sup><i class="fas fa-external-link-alt"></sup></td>
+                <td>{{ '%0.2f'| format(offer['price']|float) }} CHF</td>
+                <td>{{ '{}%'.format(offer['save_in_percentage_lp']|round(0)) if offer['save_in_percentage_lp'] else '0%' }}</td>
+                <td>{{ '{}%'.format(offer['save_in_percentage_bl']|round(0)) if offer['save_in_percentage_bl'] else 'Bricklink Priis unbekannt' }}</td>
+                <td class="scan_date">{{ offer['scan_date_p'] }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -140,15 +141,25 @@
 </div>
 {% endif %}
 
-{% if prices %}
-<h2>Priis Chart</h2>
-<div class="table-responsive">
-    {% include '_price_chart.html' %}
-</div>
-{% endif %}
+<h2>Priisentwicklig</h2>
+<form id="price_chart_request">
+    <button class="btn btn-info btn-block my-4 red accent-4" id="price_chart_btn">Chart ahfoordere</button>
+    <p id="price_chart_info"></p>
+    <div id="price_chart"></div>
+</form>
+
+<h2>Waertentwicklig</h2>
+<form id="bl_price_chart_request">
+    <button class="btn btn-info btn-block my-4 red accent-4" id="bl_price_chart_btn">Chart ahfoordere</button>
+    <p id="bl_price_chart_info"></p>
+    <div id="bl_price_chart"></div>
+</form>
 
 <script type="text/javascript" src="/lego-priisvrgliich/static/js/jquery.min.js"></script>
 <script>
+    $(".scan_date").each(function() {
+        $(this).text(moment($(this).text()).fromNow());
+    });
     $("#price_alarm").submit(function (event) {
         event.preventDefault();
         $("#price_alarm_result").text('Am usfiehre ...')
@@ -158,6 +169,30 @@
         });
         posting.fail(function (data) {
             $("#price_alarm_result").empty().append('<span style="color: red;"><i class="fas fa-times-circle"></i></span> Oops. Oepis isch schiefgloffe.')
+        });
+    });
+    $('#price_chart_request').submit(function(event) {
+        event.preventDefault();
+        $("#price_chart").html('<i class="fas fa-spinner fa-spin"></i> Chart wird glade ...')
+        var posting = $.get("/lego-priisvrgliich/price_chart/{{ set_number }}");
+        posting.done(function (data) {
+            $("#price_chart_btn").remove()
+            $("#price_chart").html(data)
+        });
+        posting.fail(function (data) {
+            $("#price_chart").empty().append('<span style="color: red;"><i class="fas fa-times-circle"></i></span> Oops. Oepis isch schiefgloffe.')
+        });
+    });
+    $("#bl_price_chart_request").submit(function (event) {
+        event.preventDefault();
+        $("#bl_price_chart").html('<i class="fas fa-spinner fa-spin"></i> Chart wird glade ...')
+        var posting = $.get("/lego-priisvrgliich/bl_price_chart/{{ set_number }}");
+        posting.done(function (data) {
+            $("#bl_price_chart_btn").remove()
+            $("#bl_price_chart").html(data)
+        });
+        posting.fail(function (data) {
+            $("#bl_price_chart").empty().append('<span style="color: red;"><i class="fas fa-times-circle"></i></span> Oops. Oepis isch schiefgloffe.')
         });
     });
 </script>

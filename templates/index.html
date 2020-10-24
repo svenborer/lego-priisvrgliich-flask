@@ -13,16 +13,14 @@
     <thead>
         <tr>
             <th scope="col"></th>
+            <th scope="col"></th>
             <th scope="col">#</th>
             <th scope="col">Name</th>
-            <th scope="col">Joor</th>
             <th scope="col">Thema</th>
             <th scope="col">Ahbieter</th>
             <th scope="col">Priis</th>
             <th scope="col">UVP</th>
-            <th scope="col"></th>
-            <th scope="col">BL</th>
-            <th scope="col"></th>
+            <th scope="col">Rabatt</th>
         </tr>
     </thead>
     <tbody>
@@ -51,20 +49,35 @@
                     </svg>
                 {% endif %}
             </td>
+            <td>
+                {% if deal['i_have'] %}
+                    <i class="fas fa-star"></i>
+                {% elif deal['i_want'] %}
+                    <i class="far fa-star"></i>
+                {% endif %}
+            </td>
             <td><i><a href="{{ url_for('set_information', set_number=deal['set_number']) }}">{{ deal['set_number'] }}</a></i></td>
-            <td><i><a href="{{ deal['url'] }}">{{ '{} ...'.format(deal['name'][:37]) if deal['name']|length > 37 else deal['name'] }}</a></i></td>
-            <td>{{ deal['year'] }}</td>
-            <td><i><a href="{{ url_for('sets_by_theme', theme=deal['theme']) }}">{{ deal['theme'] }}</a></i></td>
+            <td><i><a href="{{ deal['url'] }}">{{ '{} ...'.format(deal['name'][:30]) if deal['name']|length > 30 else deal['name'] }}</a></i> <sup><i class="fas fa-external-link-alt"></sup></td>
+            <td><i><a href="{{ url_for('sets_by_theme', theme=deal['theme']) }}">{{ deal['theme'] }}</a></i> / <i><a href="{{ url_for('sets_by_theme', theme=deal['theme'], subtheme=deal['subtheme']) }}">{{ deal['subtheme'] }}</a></i></td>
             <td>{{ deal['provider'] }}</td>
-            <td><b>{{ deal['price'] }} CHF</b></td>
-            <td>{{ '{} CHF'.format(deal['ch_price']) if deal['ch_price'] else 'N/A' }}</td>
-            <td><b>{{ '{}%'.format(deal['save_in_percentage_lp']|round(1)) if deal['save_in_percentage_lp'] or deal['save_in_percentage_lp'] == 0 else 'N/A' }}</b></td>
-            <td>{{ deal['qty_avg_price'] }} CHF</td>
-            <td><b>{{ deal['save_in_percentage_bl']|round(1) }}%</b></td>
+            <td><b>{{ '%0.2f CHF'| format(deal['price']|float) }}</b></td>
+            <td style="color: grey;">{{ '%0.2f CHF'| format(deal['ch_price']|float) if deal['ch_price'] else 'N/A' }}</td>
+            <td><b>{{ '{}%'.format(deal['save_in_percentage_lp']|int) if deal['save_in_percentage_lp'] or deal['save_in_percentage_lp'] == 0 else 'N/A' }}</b></td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 </div>
+
+<script>
+    $(document).ready(function () {
+        $('#dtDeals').DataTable({
+            "order": [[ 8, "desc" ]],
+            "paging": false,
+            "searching": false
+        });
+        $('.dataTables_length').addClass('bs-select');
+    });
+</script>
 
 {% endblock %}

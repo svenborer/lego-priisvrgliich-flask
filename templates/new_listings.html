@@ -5,58 +5,77 @@
 <h1>Neuigkeite</h1>
 
 <div class="table-responsive">
-<table class="table">
-    <thead>
-        <tr>
-            <th scope="col"></th>
-            <th scope="col">#</th>
-            <th scope="col">Name</th>
-            <th scope="col">Joor</th>
-            <th scope="col">Thema</th>
-            <th scope="col">Ahbieter</th>
-            <th scope="col">Priis</th>
-            <th scope="col">UVP</th>
-            <th scope="col">Gfunde am</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for listing in new_listings %}
-        <tr>
-            <td>
-                {% if listing['availability'] == 3 %}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #73c44d; fill: currentColor;">
-                        <circle cx="8" cy="8" r="8"></circle>
-                    </svg>
-                {% elif listing['availability'] == 4 %}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #3495eb; fill: currentColor;">
-                        <circle cx="8" cy="8" r="8"></circle>
-                    </svg>
-                {% elif listing['availability'] == 2 %}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #ffcc00; fill: currentColor;">
-                        <circle cx="8" cy="8" r="8"></circle>
-                    </svg>
-                {% elif listing['availability'] == 1 %}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #ff3300; fill: currentColor;">
-                        <circle cx="8" cy="8" r="8"></circle>
-                    </svg>
-                {% else %}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #b3b3b3; fill: currentColor;">
-                        <circle cx="8" cy="8" r="8"></circle>
-                    </svg>
-                {% endif %}
-            </td>
-            <td><i><a href="{{ url_for('set_information', set_number=listing['set_number']) }}">{{ listing['set_number'] }}</a></i></td>
-            <td><i><a href="{{ listing['url'] }}">{{ listing['name'] if listing['name'] else listing['title'] }}</a></i></td>
-            <td>{{ listing['year'] }}</td>
-            <td>{{ listing['theme'] }}/{{ listing['subtheme'] }}</td>
-            <td>{{ listing['provider'] }}</td>
-            <td>{{ listing['price'] }} CHF</td>
-            <td>{{ '{} CHF'.format(listing['ch_price']) if listing['ch_price'] else 'N/A'}}</td>
-            <td>{{ listing['scan_date'] }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <table id="dtDeals" class="table table-sm" width="100%">
+        <thead>
+            <tr>
+                <th scope="col"></th>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
+                <th scope="col">Joor</th>
+                <th scope="col">Thema</th>
+                <th scope="col">Ahbieter</th>
+                <th scope="col">Priis</th>
+                <th scope="col">UVP</th>
+                <th scope="col">Gfunde am</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for listing in new_listings %}
+            <tr>
+                <td>
+                    {% if listing['availability'] == 3 %}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #73c44d; fill: currentColor;">
+                            <circle cx="8" cy="8" r="8"></circle>
+                        </svg>
+                    {% elif listing['availability'] == 4 %}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #3495eb; fill: currentColor;">
+                            <circle cx="8" cy="8" r="8"></circle>
+                        </svg>
+                    {% elif listing['availability'] == 2 %}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #ffcc00; fill: currentColor;">
+                            <circle cx="8" cy="8" r="8"></circle>
+                        </svg>
+                    {% elif listing['availability'] == 1 %}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #ff3300; fill: currentColor;">
+                            <circle cx="8" cy="8" r="8"></circle>
+                        </svg>
+                    {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #b3b3b3; fill: currentColor;">
+                            <circle cx="8" cy="8" r="8"></circle>
+                        </svg>
+                    {% endif %}
+                </td>
+                <td><i><a href="{{ url_for('set_information', set_number=listing['set_number']) }}">{{ listing['set_number'] }}</a></i></td>
+                <td><i><a href="{{ listing['url'] }}">{{ listing['name'] if listing['name'] else listing['title'] }}</a></i> <sup><i class="fas fa-external-link-alt"></sup></td>
+                <td>{{ listing['year'] }}</td>
+                <td>
+                    {% if listing['theme'] and listing['subtheme'] %}
+                        <i><a href="{{ url_for('sets_by_theme', theme=listing['theme']) }}">{{ listing['theme'] }}</a></i> / <i><a href="{{ url_for('sets_by_theme', theme=listing['theme'], subtheme=listing['subtheme']) }}">{{ listing['subtheme'] }}</a></i>
+                    {% else %}
+                        {{ listing['theme'] }} / {{ listing['subtheme'] }}
+                    {% endif %}
+                </td>
+                <td>{{ listing['provider'] }}</td>
+                <td>{{ '%0.2f CHF'| format(listing['price']|float) }}</td>
+                <td style="color: grey;">{{ '%0.2f CHF'| format(listing['ch_price']|float) if listing['ch_price'] else 'Unbekannt' }}</td>
+                <td class="scan_date">{{ listing['scan_date'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
+
+<script>
+    $(".scan_date").each(function() {
+        $(this).text(moment($(this).text()).fromNow());
+    });
+    $(document).ready(function () {
+        $('#dtDeals').DataTable({
+            "paging": false,
+            "searching": false
+        });
+        $('.dataTables_length').addClass('bs-select');
+    });
+</script>
 
 {% endblock %}

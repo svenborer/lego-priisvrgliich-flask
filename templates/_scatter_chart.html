@@ -1,0 +1,58 @@
+<canvas id="scatterctx"></canvas>
+<script>
+    var scatterctx = document.getElementById('scatterctx').getContext('2d');
+    var scatterChart = new Chart(scatterctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {% for utp in uvp_to_pieces %}
+                {
+                label: "{{ utp[0] }}",
+                showLine: true,
+                borderColor: "rgba(227, 0, 11, 1)",
+                borderWidth: 1,
+                data: [{
+                    x: {{ utp[1] }}, y: {{ utp[2] }}
+                },{
+                    x: {{ utp[1] }}, y: {{ utp[3] }}
+                }]}, 
+                {% endfor %}
+            ]
+        },
+        options: {
+            legend: {
+                display: false
+            },
+            tooltips: {
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                        var label = data.datasets[tooltipItem.datasetIndex].label;
+                        return label + ': (' + tooltipItem.xLabel + ', ' + tooltipItem.yLabel + ')';
+                    }
+                }
+            }, 
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom'
+                },
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        callback: function(value, index, values) {
+                            return value + ' CHF';
+                        }
+                    }
+                }],
+                xAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        callback: function(value, index, values) {
+                            return value + ' Stei';
+                        }
+                    }
+                }]
+            }
+        }
+    });
+</script>
