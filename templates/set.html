@@ -7,7 +7,11 @@
         <div class="col-md-8">
             {% for info in set_information %}
                 <h1>{{ info['set_number'] }} {{ info['name'] }}</h1>
-                <p><a href="{{ url_for('sets_by_theme', theme=info['theme']) }}">{{ info['theme'] }}</a> >
+                {% if info['i_have'] %}<button type="button" class="btn btn-success btn-sm">OWN</button>{% endif %}
+                {% if info['i_want'] %}<button type="button" class="btn btn-info btn-sm">WANT</button>{% endif %}
+                {% if info['is_eol'] %}<button type="button" class="btn btn-warning btn-sm">EOL</button>{% endif %}
+                <p>
+                    <a href="{{ url_for('sets_by_theme', theme=info['theme']) }}">{{ info['theme'] }}</a> >
                     <a href="{{ url_for('sets_by_theme', theme=info['theme'], subtheme=info['subtheme']) }}">{{ info['subtheme'] }}</a></p>
                 <p>
                 Das isch d Set nummere <b>{{ info['set_number'] }} {{ info['name'] }}</b>.
@@ -76,8 +80,20 @@
                 <td><i><a href="{{ url_for('sets_by_theme', theme=info['theme'], subtheme=info['subtheme']) }}">{{ info['subtheme'] }}</a></i></td>
                 <td>{{ info['pieces'] }}</td>
                 <td>{{ info['minifigs'] }}</td>
-                <td>{{ '%0.2f CHF'| format(info['ch_price']|float) if info['ch_price'] else 'Unbekannt' }}</td>
-                <td>{{ '%0.2f CHF'| format(info['qty_avg_price']|float) if info['difference'] else 'Unbekannt' }}</td>
+                <td>
+                    {% if info['ch_price'] %}
+                        {{ '%0.2f'| format(info['ch_price']|float) }}<span style="font-size: 10px;"> CHF</span>
+                    {% else %}
+                        Unbekannt
+                    {% endif %}
+                </td>
+                <td>
+                    {% if info['difference'] %}
+                        {{ '%0.2f'| format(info['qty_avg_price']|float) }}<span style="font-size: 10px;"> CHF</span>
+                    {% else %}
+                        Unbekannt
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -87,14 +103,17 @@
 {% if offers %}
 <h2>Aktuelli Ahgebot</h2>
 <div class="table-responsive">
-    <table class="table">
+    <table id="dtDeals" class="table">
         <thead>
             <tr>
-                <th scope="col">Vrfiegbarkeit</th>
+                <th scope="col"></th>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
                 <th scope="col">Ahbieter</th>
                 <th scope="col">Priis</th>
-                <th scope="col">UVP Differaenz</th>
-                <th scope="col">Bricklink Differaenz</th>
+                <th scope="col">Aenderig</th>
+                <th scope="col">UVP Rabatt</th>
+                <th scope="col">BL Rabatt</th>
                 <th scope="col">Scan Ziitpunggt</th>
             </tr>
         </thead>
@@ -103,36 +122,48 @@
             <tr>
                 <td>
                     {% if offer['availability'] == 3 %}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
-                        style="color: #73c44d; fill: currentColor;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #73c44d; fill: currentColor;">
                         <circle cx="8" cy="8" r="8"></circle>
                     </svg>
                     {% elif offer['availability'] == 4 %}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
-                        style="color: #3495eb; fill: currentColor;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #3495eb; fill: currentColor;">
                         <circle cx="8" cy="8" r="8"></circle>
                     </svg>
                     {% elif offer['availability'] == 2 %}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
-                        style="color: #ffcc00; fill: currentColor;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #ffcc00; fill: currentColor;">
                         <circle cx="8" cy="8" r="8"></circle>
                     </svg>
                     {% elif offer['availability'] == 1 %}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
-                        style="color: #ff3300; fill: currentColor;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #ff3300; fill: currentColor;">
                         <circle cx="8" cy="8" r="8"></circle>
                     </svg>
                     {% else %}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14"
-                        style="color: #b3b3b3; fill: currentColor;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="color: #b3b3b3; fill: currentColor;">
                         <circle cx="8" cy="8" r="8"></circle>
                     </svg>
                     {% endif %}
                 </td>
-                <td><i><a href="{{ offer['url'] }}">{{ offer['provider'] }}</a></i> <sup><i class="fas fa-external-link-alt"></sup></td>
-                <td>{{ '%0.2f'| format(offer['price']|float) }} CHF</td>
-                <td>{{ '{}%'.format(offer['save_in_percentage_lp']|round(0)) if offer['save_in_percentage_lp'] else '0%' }}</td>
-                <td>{{ '{}%'.format(offer['save_in_percentage_bl']|round(0)) if offer['save_in_percentage_bl'] else 'Bricklink Priis unbekannt' }}</td>
+                <td>{{ offer['set_number'] }}</td>
+                <td>
+                    <i>
+                        <a href="{{ offer['url'] }}">{{ offer['name'] }}</a>
+                    </i>
+                    <sup>
+                        <i class="fas fa-external-link-alt" style="font-size: 8px;"></i>
+                    </sup>
+                </td>
+                <td><i><a href="{{ url_for('provider', provider=offer['provider']) }}">{{ offer['provider'] }}</a></i></td>
+                <td><b>{{ '%0.2f'| format(offer['price']|float) }}</b> <span style="font-size: 10px;"> CHF</span></td>
+                    <td>
+                    {% if offer['price_change_l7d'] > 0 %}
+                        <i style="color: #ff3300; fill: currentColor;"><i class="fas fa-arrow-up"></i> {{ offer['price_change_l7d'] }}<span style="font-size: 10px;"> CHF</span></i>
+                    {% endif %}
+                    {% if offer['price_change_l7d'] < 0 %}
+                        <i style="color: #73c44d; fill: currentColor;"><i class="fas fa-arrow-down"></i> {{ offer['price_change_l7d'] }}<span style="font-size: 10px;"> CHF</span></i>
+                    {% endif %}
+                    </td>
+                    <td>{{ '{}%'.format(offer['save_in_percentage_lp']|int) if offer['save_in_percentage_lp'] else '0%' }}</td>
+                <td>{{ '{}%'.format(offer['save_in_percentage_bl']|int) if offer['save_in_percentage_bl'] else 'Bricklink Priis unbekannt' }}</td>
                 <td class="scan_date">{{ offer['scan_date_p'] }}</td>
             </tr>
             {% endfor %}
@@ -142,25 +173,25 @@
 {% endif %}
 
 <h2>Priisentwicklig</h2>
-<form id="price_chart_request">
-    <button class="btn btn-info btn-block my-4 red accent-4" id="price_chart_btn">Chart ahfoordere</button>
+<form id="price_chart_request" action="">
+    <button class="btn btn-info my-4 red accent-4" id="price_chart_btn">Chart ahfoordere</button>
     <p id="price_chart_info"></p>
     <div id="price_chart"></div>
 </form>
 
 <h2>Waertentwicklig</h2>
-<form id="bl_price_chart_request">
-    <button class="btn btn-info btn-block my-4 red accent-4" id="bl_price_chart_btn">Chart ahfoordere</button>
+<form id="bl_price_chart_request" action="">
+    <button class="btn btn-info my-4 red accent-4" id="bl_price_chart_btn">Chart ahfoordere</button>
     <p id="bl_price_chart_info"></p>
     <div id="bl_price_chart"></div>
 </form>
 
-<script type="text/javascript" src="/lego-priisvrgliich/static/js/jquery.min.js"></script>
 <script>
     $(".scan_date").each(function() {
         $(this).text(moment($(this).text()).fromNow());
     });
     $("#price_alarm").submit(function (event) {
+        console.log("Called price_alarm ...")
         event.preventDefault();
         $("#price_alarm_result").text('Am usfiehre ...')
         var posting = $.post("/lego-priisvrgliich/subscribe/set/{{ set_number }}", $("#price_alarm").serialize());
@@ -172,6 +203,7 @@
         });
     });
     $('#price_chart_request').submit(function(event) {
+        console.log("Called price_chart_request ...")
         event.preventDefault();
         $("#price_chart").html('<i class="fas fa-spinner fa-spin"></i> Chart wird glade ...')
         var posting = $.get("/lego-priisvrgliich/price_chart/{{ set_number }}");
@@ -184,6 +216,7 @@
         });
     });
     $("#bl_price_chart_request").submit(function (event) {
+        console.log("Called bl_price_chart_request ...")
         event.preventDefault();
         $("#bl_price_chart").html('<i class="fas fa-spinner fa-spin"></i> Chart wird glade ...')
         var posting = $.get("/lego-priisvrgliich/bl_price_chart/{{ set_number }}");
@@ -194,6 +227,13 @@
         posting.fail(function (data) {
             $("#bl_price_chart").empty().append('<span style="color: red;"><i class="fas fa-times-circle"></i></span> Oops. Oepis isch schiefgloffe.')
         });
+    });
+    $(document).ready(function () {
+        $('#dtDeals').DataTable({
+            "paging": false,
+            "searching": false
+        });
+        $('.dataTables_length').addClass('bs-select');
     });
 </script>
 

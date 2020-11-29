@@ -51,13 +51,19 @@
                     {% endif %}
                 </td>
                 <td><i><a href="{{ url_for('set_information', set_number=s['set_number']) }}">{{ s['set_number'] }}</a></i></td>
-                <td>{{ s['name'] }}</td>
+                <td>{{ s['name'] }} {% if s['is_eol'] %}<i class="far fa-calendar-times"></i>{% endif %}</td>
                 <td>{{ s['year'] }}</td>
                 <td><i><a href="{{ url_for('sets_by_theme', theme=s['theme'], subtheme=s['subtheme']) }}">{{ s['subtheme'] }}</a></i></td>
                 <td>{{ s['pieces'] if s['pieces'] else 0 }}</td>
                 <td>{{ s['minifigs'] if s['minifigs'] else 0 }}</td>
-                <td><b>{{ '%0.2f CHF'| format(s['current_low_price']|float) }}</b></td>
-                <td style="color: grey;">{{ '%0.2f CHF'| format(s['ch_price']|float) if s['ch_price'] else 'Unbekannt' }}</td>
+                <td><b>{{ '%0.2f'| format(s['current_low_price']|float) }}</b><span style="font-size: 10px;"> CHF</span></td>
+                <td style="color: grey;">
+                    {% if s['ch_price'] %}
+                        {{ '%0.2f'| format(s['ch_price']|float) }}<span style="font-size: 10px;"> CHF</span>
+                    {% else %}
+                        Unbekannt
+                    {% endif %}
+                </td>
                 <td>
                     {% if s['uvp_rabatt'] %}
                         <b>{{ '{}%'.format(s['uvp_rabatt']|int) }}</b>

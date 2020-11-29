@@ -32,24 +32,23 @@ def get_latest_offers(set_number):
             *,
             (
                 100 -(
-                    tbl_provider_scans.price
+                    tmp_deals.price
                 ) /(blp.qty_avg_price / 100)
             ) AS save_in_percentage_bl,
             (
                 100 -(
-                    tbl_provider_scans.price
+                    tmp_deals.price
                 ) /(tbl_sets.ch_price / 100)
             ) AS save_in_percentage_lp,
-            tbl_provider_scans.scan_date AS scan_date_p
+            tmp_deals.scan_date AS scan_date_p
         FROM
-            tbl_provider_scans
-        JOIN tbl_sets ON tbl_sets.set_number = tbl_provider_scans.set_number
+            tmp_deals
+        JOIN tbl_sets ON tbl_sets.set_number = tmp_deals.set_number
         LEFT JOIN tmp_newest_bricklink_prices AS blp
         ON
-            blp.set_number = tbl_provider_scans.set_number AND blp.product_condition = 'new'
-		JOIN tmp_latest_scan_ids AS sid USING(scan_id)
+            blp.set_number = tmp_deals.set_number AND blp.product_condition = 'new'
         WHERE 
-            tbl_provider_scans.set_number = %s
+            tmp_deals.set_number = %s
         ORDER BY
             price
     """
@@ -144,7 +143,7 @@ def get_sets(theme='%', subtheme='%'):
 def get_set_information(set_number='%'):
     query = """
         SELECT
-            tbl_provider_scans.*,
+            tmp_deals.*,
             tbl_sets.*,
             blp.qty_avg_price,
             (
@@ -154,12 +153,11 @@ def get_set_information(set_number='%'):
             ) AS difference
         FROM
             tbl_sets
-        LEFT JOIN tbl_provider_scans USING(set_number)
+        LEFT JOIN tmp_deals USING(set_number)
         LEFT JOIN tmp_newest_bricklink_prices AS blp
         ON
             blp.set_number = tbl_sets.set_number AND
             blp.product_condition = 'new'
-        LEFT JOIN tmp_latest_scan_ids USING(scan_id)
         WHERE
             tbl_sets.set_number LIKE %s
         GROUP BY
@@ -175,24 +173,19 @@ def get_new_listings():
         SELECT
             *
         FROM
-            tbl_provider_scans
-        INNER JOIN(
-            SELECT
-                set_number,
-                MIN(scan_date) AS scan_date
-            FROM
-                tbl_provider_scans
-            GROUP BY
-                set_number
-        ) AS MAX USING(set_number, scan_date)
-        LEFT JOIN tbl_sets USING(set_number)
-        WHERE
-            scan_date > NOW() - INTERVAL 4 WEEK
+            tmp_new_listings
+        LEFT JOIN tbl_sets USING (set_number)
         ORDER BY
             scan_date
         DESC
     """
     return _execute_query(query)         
+
+def get_price_chart_for_set_l7d(set_number, provider):
+    query = """
+    SELECT * FROM tbl_providers_l7d WHERE set_number = %s AND provider = %s
+    """
+    return [_['price'] for _ in _execute_query(query, (set_number, provider))]
 
 def get_provider_deals(lp_treshold=0, query_pattern='%'):
     query = """
@@ -200,39 +193,40 @@ def get_provider_deals(lp_treshold=0, query_pattern='%'):
             *,
             (
                 100 -(
-                    tbl_provider_scans.price /(tbl_sets.ch_price / 100)
+                    tmp_deals.price /(tbl_sets.ch_price / 100)
                 )
             ) AS save_in_percentage_lp
         FROM
-            tbl_provider_scans
+            tmp_deals
         LEFT JOIN tbl_sets
         ON
-            tbl_sets.set_number = tbl_provider_scans.set_number
-        JOIN tmp_latest_scan_ids USING(scan_id)
+            tbl_sets.set_number = tmp_deals.set_number
         WHERE
             tbl_sets.name IS NOT NULL AND 
-            (
+            tbl_sets.i_want IS NOT NULL OR (
                 (
-                    100 -(
-                        tbl_provider_scans.price /(tbl_sets.ch_price / 100)
-                    )
-                ) > %s
-            ) AND (
-                (
-                    tbl_sets.owned_by > 2000 OR
-                    tbl_sets.wanted_by > 2000 OR
-                    tbl_sets.pieces > 800
+                    (
+                        100 -(
+                            tmp_deals.price /(tbl_sets.ch_price / 100)
+                        )
+                    ) > %s
                 ) AND (
-                    tbl_provider_scans.set_number LIKE %s OR
-                    tbl_provider_scans.title LIKE %s OR
-                    tbl_sets.name LIKE %s OR
-                    tbl_sets.theme LIKE %s OR
-                    tbl_sets.subtheme LIKE %s
+                    (
+                        tbl_sets.owned_by > 750 OR
+                        tbl_sets.wanted_by > 750 OR
+                        tbl_sets.pieces > 500
+                    ) AND (
+                        tmp_deals.set_number LIKE %s OR
+                        tmp_deals.title LIKE %s OR
+                        tbl_sets.name LIKE %s OR
+                        tbl_sets.theme LIKE %s OR
+                        tbl_sets.subtheme LIKE %s
+                    )
                 )
-            ) 
+            )
         GROUP BY
-            tbl_provider_scans.set_number,
-            tbl_provider_scans.provider
+            tmp_deals.set_number,
+            tmp_deals.provider
         ORDER BY
             save_in_percentage_lp
         DESC

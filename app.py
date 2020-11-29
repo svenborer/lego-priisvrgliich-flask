@@ -40,6 +40,37 @@ def index():
         provider_deals.append(deal)
     return render_template('index.html', provider_deals=provider_deals)
 
+@app.route("/lego-priisvrgliich/provider/<provider>")
+def provider(provider):
+    provider_deals_tmp = [_ for _ in q.get_provider_deals() if _['provider'] == provider]
+    provider_deals = []
+    for deal in provider_deals_tmp:
+        deal = dict(deal)
+        deal.update({'availability' : get_availability_score(deal['availability'])})
+        provider_deals.append(deal)
+    return render_template('index.html', provider_deals=provider_deals)
+
+@app.route("/lego-priisvrgliich/diefflieger")
+def diefflieger():
+    provider_deals_tmp = [_ for _ in q.get_provider_deals() if _['price_change_l7d'] != 0]
+    provider_deals_tmp = sorted(provider_deals_tmp, key = lambda i: i['price_change_l7d'])
+    provider_deals = []
+    for deal in provider_deals_tmp:
+        deal = dict(deal)
+        deal.update({'availability' : get_availability_score(deal['availability'])})
+        provider_deals.append(deal)
+    return render_template('index.html', provider_deals=provider_deals)
+
+@app.route("/lego-priisvrgliich/eol")
+def eol():
+    provider_deals_tmp = [_ for _ in q.get_provider_deals() if _['is_eol']]
+    provider_deals = []
+    for deal in provider_deals_tmp:
+        deal = dict(deal)
+        deal.update({'availability' : get_availability_score(deal['availability'])})
+        provider_deals.append(deal)
+    return render_template('index.html', provider_deals=provider_deals)
+
 @app.route("/lego-priisvrgliich/set/<set_number>")
 def set_information(set_number):
     if re.match(r'[0-9]{4,7}', str(set_number)):
