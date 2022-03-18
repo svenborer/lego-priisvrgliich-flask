@@ -229,15 +229,13 @@ def scan_statistics():
 def sets_by_theme(theme, subtheme):
     sets = q.get_sets_on_market_unique(theme=theme, subtheme=subtheme)
     all_sets = q.get_sets(theme=theme, subtheme=subtheme)
-    print(sets)
-    print(all_sets)
-    if sets and all_sets:
+    if all_sets:
         biggest_set = max([x for x in all_sets if x['pieces']], key=lambda x:x['pieces'])
         cost_per_piece = [(x['ch_price']/x['pieces']) for x in all_sets if x['ch_price'] and x['pieces']]
-        cost_per_piece = mean(cost_per_piece) if len(cost_per_piece) > 0  else 0
+        cost_per_piece = mean(cost_per_piece) if len(cost_per_piece) > 0 else 0
         birthyear = min(all_sets, key=lambda x:x['year'])['year']
         uvp_to_pieces = [('{} {}'.format(_['set_number'], _['name']), _['pieces'], _['ch_price'], _['current_low_price']) for _ in sets if _['ch_price']]
-        return render_template('sets_by_theme.html', subtheme=subtheme, uvp_to_pieces=uvp_to_pieces, sets=sets, cost_per_piece=cost_per_piece, biggest_set=biggest_set, birthyear=birthyear)
+        return render_template('sets_by_theme.html', subtheme=subtheme, uvp_to_pieces=uvp_to_pieces, sets=sets, eol_sets=all_sets, cost_per_piece=cost_per_piece, biggest_set=biggest_set, birthyear=birthyear)
     return render_template('404.html'), 404
 
 @app.route("/lego-priisvrgliich/search/", methods=['GET'])

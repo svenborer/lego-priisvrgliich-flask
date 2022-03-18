@@ -123,20 +123,30 @@ def get_sets_on_market_unique(theme='%', subtheme='%'):
 def get_sets(theme='%', subtheme='%'):
     query = """
         SELECT
-            *
+            *,
+            (
+                ((qty_avg_price*0.88 / us_price) * 100)-100
+            ) AS value
         FROM
             tbl_sets
+        JOIN
+            tmp_newest_bricklink_prices ON tmp_newest_bricklink_prices.set_number = tbl_sets.set_number AND tmp_newest_bricklink_prices.product_condition = 'new'
         WHERE
             theme LIKE %s AND subtheme LIKE %s
     """
     if subtheme == '%':
         query = """
-            SELECT
-                *
-            FROM
-                tbl_sets
-            WHERE
-                theme LIKE %s AND (subtheme LIKE %s OR subtheme IS NULL)
+        SELECT
+            *,
+            (
+                ((qty_avg_price*0.88 / us_price) * 100)-100
+            ) AS value
+        FROM
+            tbl_sets
+        JOIN
+            tmp_newest_bricklink_prices ON tmp_newest_bricklink_prices.set_number = tbl_sets.set_number AND tmp_newest_bricklink_prices.product_condition = 'new'
+        WHERE
+            theme LIKE %s AND (subtheme LIKE %s OR subtheme IS NULL)
         """
     return _execute_query(query, (theme, subtheme))
 
@@ -150,10 +160,12 @@ def get_set_information(set_number='%'):
                 100 - (
                     blp.qty_avg_price /(tbl_sets.ch_price / 100)
                 )
-            ) AS difference
+            ) AS difference,
+            tmp_part_out_value.last_6m_average
         FROM
             tbl_sets
         LEFT JOIN tmp_deals USING(set_number)
+        LEFT JOIN tmp_part_out_value USING(set_number)
         LEFT JOIN tmp_newest_bricklink_prices AS blp
         ON
             blp.set_number = tbl_sets.set_number AND

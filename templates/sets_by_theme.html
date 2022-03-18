@@ -4,10 +4,10 @@
 <div class="container">
     <div class="row">
         <div class="col-md-8">
-            <h1><a href="{{ url_for('sets_by_theme', theme=sets[0]['theme']) }}">{{ sets[0]['theme'] }}</a>{% if subtheme != '%' %} > <a href="{{ url_for('sets_by_theme', theme=sets[0]['theme'], subtheme=subtheme) }}">{{ subtheme }}</a> {% endif %}</h1>
-            <p>Es sind momentan <b>{{ sets|length }} Sets</b> vom Themegebiet <b>{{ sets[0]['theme'] }}</b> ufem Maert.
+            <h1><a href="{{ url_for('sets_by_theme', theme=eol_sets[0]['theme']) }}">{{ eol_sets[0]['theme'] }}</a>{% if subtheme != '%' %} > <a href="{{ url_for('sets_by_theme', theme=eol_sets[0]['theme'], subtheme=subtheme) }}">{{ subtheme }}</a> {% endif %}</h1>
+            <p>Es sind momentan <b>{{ sets|length }} Sets</b> vom Themegebiet <b>{{ eol_sets[0]['theme'] }}</b> ufem Maert.
                 Historisch gseh choschtet e Stei in dere Setreihe circa <b>{{ cost_per_piece|round(2) }} CHF</b>. S
-                thema <b>{{ sets[0]['theme'] }}</b> existiert sit em Joor <b>{{ birthyear }}</b>.</p>
+                thema <b>{{ eol_sets[0]['theme'] }}</b> existiert sit em Joor <b>{{ birthyear }}</b>.</p>
         </div>
         <div class="col-md-4">
             <h2>Rabatt Alarm</h2>
@@ -22,8 +22,8 @@
     </div>
 </div>
 
+{% if sets %}
 <h2>Momentan vrfiegbari Sets</h2>
-
 <div class="table-responsive">
     <table id="dtDeals" class="table table-sm" width="100%">
         <thead>
@@ -61,7 +61,7 @@
                     {% if s['ch_price'] %}
                         {{ '%0.2f'| format(s['ch_price']|float) }}<span style="font-size: 10px;"> CHF</span>
                     {% else %}
-                        Unbekannt
+                        -1
                     {% endif %}
                 </td>
                 <td>
@@ -83,12 +83,63 @@
 <div class="table-responsive">
     {% include '_scatter_chart.html' %}
 </div>
+{% endif %}
+
+<h2>Alli Sets</h2>
+
+<div class="table-responsive">
+    <table id="allSets" class="table table-sm" width="100%">
+        <thead>
+            <tr>
+                <th scope="col"></th>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
+                <th scope="col">Joor</th>
+                <th scope="col">Unterthema</th>
+                <th scope="col">Baustei</th>
+                <th scope="col">Minifigs</th>
+                <th scope="col">UVP</th>
+                <th scope="col">BL</th>
+                <th scope="col">Waertsteigerig</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in eol_sets %}
+            <tr>
+                <td>
+                    {% if s['i_have'] %}
+                        <i class="fas fa-star"></i>
+                    {% elif s['i_want'] %}
+                        <i class="far fa-star"></i>
+                    {% endif %}
+                </td>
+                <td><i><a href="{{ url_for('set_information', set_number=s['set_number']) }}">{{ s['set_number'] }}</a></i></td>
+                <td>{{ s['name'] }} {% if s['is_eol'] %}<i class="far fa-calendar-times"></i>{% endif %}</td>
+                <td>{{ s['year'] }}</td>
+                <td><i><a href="{{ url_for('sets_by_theme', theme=s['theme'], subtheme=s['subtheme']) }}">{{ s['subtheme'] }}</a></i></td>
+                <td>{{ s['pieces'] if s['pieces'] else 0 }}</td>
+                <td>{{ s['minifigs'] if s['minifigs'] else 0 }}</td>
+                <td style="color: grey;">
+                    {% if s['ch_price'] %}
+                        {{ '%0.2f'| format(s['ch_price']|float) }}<span style="font-size: 10px;"> CHF</span>
+                    {% else %}
+                        -1
+                    {% endif %}
+                </td>
+                <td>{{ s['qty_avg_price'] }} CHF</td>
+                <td>{{ s['value']|int }} %</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 
 <script>
     $("#price_alarm").submit(function (event) {
         event.preventDefault();
         $("#price_alarm_result").text('Am usfiehre ...')
-        var posting = $.post("/lego-priisvrgliich/subscribe/theme/{{ sets[0]['theme'] }}", $("#price_alarm").serialize());
+        var posting = $.post("/lego-priisvrgliich/subscribe/theme/{{ eol_sets[0]['theme'] }}", $("#price_alarm").serialize());
         posting.done(function (data) {
             $("#price_alarm_result").empty().append('<span style="color: limegreen;"><i class="fas fa-check-circle"></i></span> Erledigt.')
         });
@@ -99,11 +150,44 @@
 </script>
 
 <script>
+    jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+        "currency-pre": function ( a ) {
+            a = (a==="-") ? 0 : a.replace( /[^\d\-\.]/g, "" );
+            return parseFloat( a );
+        },
+
+        "currency-asc": function ( a, b ) {
+    debugger;
+            return a - b;
+        },
+
+        "currency-desc": function ( a, b ) {
+    debugger;
+            return b - a;
+        }
+    } );
     $(document).ready(function () {
         $('#dtDeals').DataTable({
             "order": [[ 9, "desc" ]],
             "paging": false,
-            "searching": false
+            "searching": false,
+            "aoColumnDefs": [
+                {
+                    "type": "currency",
+                    targets: [7, 8]
+                }
+            ],
+        });
+        $('#allSets').DataTable({
+            "order": [[ 3, "desc" ]],
+            "paging": false,
+            "searching": false,
+            "aoColumnDefs": [
+                {
+                    "type": "currency",
+                    targets: 7
+                }
+            ],
         });
         $('.dataTables_length').addClass('bs-select');
     });

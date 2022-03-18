@@ -25,16 +25,16 @@
                 <b>{{ info['minifigs'] if info['minifigs'] else 0 }}</b>
                 Minifigure{{ ' , also hets e original {} CHF pro LEGO stei'.format((info['ch_price']/info['pieces'])|round(2)) if info['ch_price'] and info['pieces'] }}.
                 {% if offers %}
-                S aktuell tiefschte Ahgebot liggt bi <b>{{ offers[0]['price'] }} CHF</b> und wird vo
-                <b>{{ offers[0]['provider'] }}</b> ahbotte, das entspricht
-                <b>{{ '{} Rappe'.format(((offers[0]['price']/info['pieces'])*100)|int) if offers[0]['price'] and info['pieces'] else 'N/A' }}</b>
-                pro LEGO Stei.
-                {% if info['ch_price'] %}
-                Du wirdsch <b>{{ (info['ch_price']-offers[0]['price'])|round(2) }} CHF</b> spaare, was umgraechnet
-                <b>{{ '{}%'.format(offers[0]['save_in_percentage_lp']|round(0)) }}</b> entspricht.
-                {% endif %}
+                    S aktuell tiefschte Ahgebot liggt bi <b>{{ offers[0]['price'] }} CHF</b> und wird vo
+                    <b>{{ offers[0]['provider'] }}</b> ahbotte, das entspricht
+                    <b>{{ '{} Rappe'.format(((offers[0]['price']/info['pieces'])*100)|int) if offers[0]['price'] and info['pieces'] else 'N/A' }}</b>
+                    pro LEGO Stei.
+                    {% if info['ch_price'] %}
+                    Du wirdsch <b>{{ (info['ch_price']-offers[0]['price'])|round(2) }} CHF</b> spaare, was umgraechnet
+                    <b>{{ '{}%'.format(offers[0]['save_in_percentage_lp']|round(0)) }}</b> entspricht.
+                    {% endif %}
                 {% else %}
-                Das Set isch momentan nit ufem Maert.
+                    Das Set isch momentan nit ufem Maert.
                 {% endif %}
             </p>
             <img src="{{ info['image_url'] }}" style="width:66%;"></img><br>
@@ -68,6 +68,7 @@
                 <th scope="col">Minifigure</th>
                 <th scope="col">UVP</th>
                 <th scope="col">Bricklink</th>
+                <th scope="col">POV</th>
             </tr>
         </thead>
         <tbody>
@@ -88,8 +89,15 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if info['difference'] %}
+                    {% if info['qty_avg_price'] %}
                         {{ '%0.2f'| format(info['qty_avg_price']|float) }}<span style="font-size: 10px;"> CHF</span>
+                    {% else %}
+                        Unbekannt
+                    {% endif %}
+                </td>
+                <td>
+                    {% if info['last_6m_average'] %}
+                        {{ '%0.2f'| format(info['last_6m_average']|float) }}<span style="font-size: 10px;"> CHF</span>
                     {% else %}
                         Unbekannt
                     {% endif %}
@@ -172,12 +180,14 @@
 </div>
 {% endif %}
 
+{% if offers %}
 <h2>Priisentwicklig</h2>
 <form id="price_chart_request" action="">
     <button class="btn btn-info my-4 red accent-4" id="price_chart_btn">Chart ahfoordere</button>
     <p id="price_chart_info"></p>
     <div id="price_chart"></div>
 </form>
+{% endif %}
 
 <h2>Waertentwicklig</h2>
 <form id="bl_price_chart_request" action="">
